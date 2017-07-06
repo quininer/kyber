@@ -1,0 +1,9 @@
+[package]
+name = "kyber"
+version = "0.1.0"
+authors = ["quininer kel <quininer@live.com>"]
+
+[dependencies]
+rand = "*"
+tiny-keccak = "*"
+byteorder = "*"
