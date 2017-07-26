@@ -2,6 +2,7 @@
 
 extern crate byteorder;
 extern crate tiny_keccak;
+extern crate sp800_185;
 
 pub mod params;
 pub mod reduce;

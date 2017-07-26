@@ -22,7 +22,7 @@ const BITREV_TABLE: [u16; N] = [
 ];
 
 
-pub fn bitrev_vector(poly: &mut [u16]) {
+pub fn bitrev_vector(poly: &mut [u16; N]) {
     for (i, r) in BITREV_TABLE.iter()
         .map(|&r| r as usize)
         .enumerate()
@@ -33,16 +33,16 @@ pub fn bitrev_vector(poly: &mut [u16]) {
 }
 
 
-pub fn mul_coefficients(poly: &mut [u16], factors: &[u16]) {
+pub fn mul_coefficients(poly: &mut [u16; N], factors: &[u16; N]) {
     for i in 0..N {
         poly[i] = montgomery_reduce((poly[i] * factors[i]) as u32);
     }
 }
 
-pub fn ntt(a: &mut [u16], omega: &[u16]) {
+pub fn ntt(a: &mut [u16; N], omega: &[u16; N / 2]) {
     for level in 0..8 {
         for start in 0..(1 << level) {
-            for (jt, j) in (start..(N - 1)).step_by(2 * 1 << level).enumerate() {
+            for (jt, j) in (start..(N - 1)).step_by(2 * (1 << level)).enumerate() {
                 let w = omega[jt];
                 let tmp = a[j];
 

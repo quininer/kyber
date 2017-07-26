@@ -8,14 +8,14 @@ pub fn montgomery_reduce(mut a: u32) -> u16 {
     let mut u = a * QINV;
     u &= (1 << RLOG) - 1;
     u *= Q as u32;
-    a = a + u;
+    a += u;
     (a >> RLOG) as u16
 }
 
 
 pub fn barrett_reduce(a: u16) -> u16 {
     //static const uint16_t sinv = 8; // trunc((2^16/q))
-    let mut u = a >> 13;//((uint32_t) a * sinv) >> 16;
+    let mut u = a >> 13; //((uint32_t) a * sinv) >> 16;
     u *= Q as u16;
     a - u
 }

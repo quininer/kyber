@@ -6,4 +6,5 @@ authors = ["quininer kel <quininer@live.com>"]
 [dependencies]
 rand = "*"
 tiny-keccak = "*"
+sp800-185 = "*"
 byteorder = "*"
