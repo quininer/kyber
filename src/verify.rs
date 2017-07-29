@@ -1,4 +1,3 @@
-#[inline(never)]
 pub fn eq(a: &[u8], b: &[u8]) -> bool {
     use std::ops::BitOr;
 
@@ -13,10 +12,9 @@ fn select_u8(flag: u8, x: u8, y: u8) -> u8 {
         | (flag.wrapping_sub(1) & y)
 }
 
-#[inline(never)]
-pub fn select_mov(r: &mut [u8], x: &[u8], flag: bool) {
+pub fn select_mov(r: &mut [u8], x: &[u8], flag: u8) {
     for (r, &x) in r.iter_mut().zip(x) {
-        *r = select_u8(flag as u8, *r, x);
+        *r = select_u8(flag, *r, x);
     }
 }
 
@@ -35,10 +33,10 @@ fn test_verify_select_mov() {
 
 
     let flag = eq(&a, &a);
-    select_mov(&mut r, &x, flag);
+    select_mov(&mut r, &x, flag as u8);
     assert_eq!(r, [0, 0, 0]);
 
     let flag = eq(&a, &b);
-    select_mov(&mut r, &x, flag);
+    select_mov(&mut r, &x, flag as u8);
     assert_eq!(r, x);
 }

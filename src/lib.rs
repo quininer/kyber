@@ -7,6 +7,8 @@ extern crate sp800_185;
 pub mod params;
 pub mod reduce;
 pub mod poly;
+pub mod polyvec;
 pub mod ntt;
 pub mod cbd;
+pub mod indcpa;
 pub mod verify;

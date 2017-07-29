@@ -1,51 +1,75 @@
 use sp800_185::CShake;
 use ::params::{
     N, Q,
+    SHAREDKEYBYTES,
     PSIS_BITREV_MONTGOMERY, OMEGAS_MONTGOMER,
     PSIS_INV_MONTGOMERY, OMEGAS_INV_BITREV_MONTGOMERY
 };
 use ::reduce::{ barrett_reduce, freeze };
 use ::cbd::cbd;
-use ::ntt::{ bitrev_vector, mul_coefficients, ntt };
+use ::ntt::{ bitrev_vector, mul_coefficients, ntt as fft };
 
 
 pub type Poly = [u16; N];
 
-pub fn poly_compress(poly: &Poly, buf: &mut [u8]) {
-    const Q: u32 = ::params::Q as u32;
+pub fn compress(poly: &Poly, buf: &mut [u8]) {
     let mut t = [0; 8];
     let mut k = 0;
 
     for i in (0..N).step_by(8) {
         for j in 0..8 {
-            t[j] = ((((freeze(poly[i + j]) as u32) << 3) + Q / 2) / Q) & 7;
+            t[j] = ((((freeze(poly[i + j]) as u32) << 3) + Q as u32 / 2) / Q as u32) & 7;
         }
 
-        buf[k]      = ( t[0]       | (t[1] << 3) | (t[2] << 6))                 as u8;
-        buf[k + 1]  = ((t[2] >> 2) | (t[3] << 1) | (t[4] << 4) | (t[5] << 7))   as u8;
-        buf[k + 2]  = ((t[5] >> 1) | (t[6] << 2) | (t[7] << 5))                 as u8;
+        macro_rules! compress {
+            ( $i:expr; $( $op:tt $x:expr, $v:expr );*) => {
+                buf[k + $i] = ( 0 $( | (t[$x] $op $v) )* ) as u8;
+            }
+        }
+
+        compress!(0; >> 0, 0; << 1, 3; << 2, 6);
+        compress!(1; >> 2, 2; << 3, 1; << 4, 4; << 5, 7);
+        compress!(2; >> 5, 1; << 6, 2; << 7, 5);
         k += 3;
     }
 }
 
-pub fn poly_decompress(poly: &mut Poly, buf: &[u8]) {
+pub fn decompress(poly: &mut Poly, buf: &[u8]) {
     const Q: u16 = ::params::Q as u16;
     let mut a = 0;
     for i in (0..N).step_by(8) {
-        poly[i    ] =  ((((buf[a    ] as u16) &  7)                                         * Q) + 4) >> 3;
-        poly[i + 1] = (((((buf[a    ] as u16) >> 3) & 7)                                    * Q) + 4) >> 3;
-        poly[i + 2] = (((((buf[a    ] as u16) >> 6) | (((buf[a + 1] as u16) << 2) & 4))     * Q) + 4) >> 3;
-        poly[i + 3] = (((((buf[a + 1] as u16) >> 1) & 7)                                    * Q) + 4) >> 3;
-        poly[i + 4] = (((((buf[a + 1] as u16) >> 4) & 7)                                    * Q) + 4) >> 3;
-        poly[i + 5] = (((((buf[a + 1] as u16) >> 7) | (((buf[a + 2] as u16) << 1) & 6))     * Q) + 4) >> 3;
-        poly[i + 6] = (((((buf[a + 2] as u16) >> 2) & 7)                                    * Q) + 4) >> 3;
-        poly[i + 7] =  ((((buf[a + 2] as u16) >> 5)                                         * Q) + 4) >> 3;
+        macro_rules! decompress {
+            ( $i:expr ; $e:expr ) => {
+                poly[i + $i] = (($e * Q) + 4) >> 3;
+            };
+            ( $i:expr ; $a:expr, $ax:expr ) => {
+                decompress!($i; ((buf[a + $a] as u16) >> $ax));
+            };
+            ( $i:expr ; $a:expr, $ax:expr, $ay:expr ) => {
+                decompress!($i; (((buf[a + $a] as u16) >> $ax) & $ay));
+            };
+            ( $i:expr ; $a:expr, $ax:expr; $b:expr, $bx:expr, $by:expr ) => {
+                decompress!($i; (
+                    ((buf[a + $a] as u16) >> $ax) |
+                    (((buf[a + $b] as u16) << $bx) & $by)
+                ));
+            };
+        }
+
+        decompress!(0; 0, 0, 7);
+        decompress!(1; 0, 3, 7);
+        decompress!(2; 0, 6; 1, 2, 4);
+        decompress!(3; 1, 1, 7);
+        decompress!(4; 1, 4, 7);
+        decompress!(5; 1, 7; 2, 1, 6);
+        decompress!(6; 2, 2, 7);
+        decompress!(7; 2, 5);
         a += 3;
     }
 }
 
 
-pub fn poly_tobytes(poly: &Poly, buf: &mut [u8]) {
+pub fn tobytes(poly: &Poly, buf: &mut [u8]) {
     let mut t = [0; 8];
     for i in 0..(N / 8) {
         for j in 0..8 {
@@ -68,7 +92,7 @@ pub fn poly_tobytes(poly: &Poly, buf: &mut [u8]) {
     }
 }
 
-pub fn poly_frombytes(poly: &mut Poly, buf: &[u8]) {
+pub fn frombytes(poly: &mut Poly, buf: &[u8]) {
     for i in 0..(N / 8) {
         poly[8*i  ] =  (buf[13*i   ] as u16)       | ((buf[13*i+ 1] as u16 & 0x1f) << 8);
         poly[8*i+1] = ((buf[13*i+ 1] as u16) >> 5) | ((buf[13*i+ 2] as u16       ) << 3) | (((buf[13*i+ 3] as u16) & 0x03) << 11);
@@ -81,7 +105,7 @@ pub fn poly_frombytes(poly: &mut Poly, buf: &[u8]) {
     }
 }
 
-pub fn poly_getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
+pub fn getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
     let mut buf = [0; N];
 
     let mut cshake = CShake::new_cshake128(&[], &[nonce, 0x00]);
@@ -91,25 +115,43 @@ pub fn poly_getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
     cbd(poly, &buf);
 }
 
-pub fn poly_ntt(poly: &mut Poly) {
+pub fn ntt(poly: &mut Poly) {
     mul_coefficients(poly, &PSIS_BITREV_MONTGOMERY);
-    ntt(poly, &OMEGAS_MONTGOMER);
+    fft(poly, &OMEGAS_MONTGOMER);
 }
 
-pub fn poly_invntt(poly: &mut Poly) {
+pub fn invntt(poly: &mut Poly) {
     bitrev_vector(poly);
-    ntt(poly, &OMEGAS_INV_BITREV_MONTGOMERY);
+    fft(poly, &OMEGAS_INV_BITREV_MONTGOMERY);
     mul_coefficients(poly, &PSIS_INV_MONTGOMERY);
 }
 
-pub fn poly_add(r: &mut Poly, a: &Poly, b: &Poly) {
+pub fn add(r: &mut Poly, a: &Poly, b: &Poly) {
     for i in 0..N {
         r[i] = barrett_reduce(a[i] + b[i]);
     }
 }
 
-pub fn poly_sub(r: &mut Poly, a: &Poly, b: &Poly) {
+pub fn sub(r: &mut Poly, a: &Poly, b: &Poly) {
     for i in 0..N {
         r[i] = barrett_reduce(a[i] + 3 * Q as u16 - b[i]);
+    }
+}
+
+pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
+    for (i, b) in msg.iter().enumerate() {
+        for j in 0..8 {
+            let mask = ::std::u16::MIN.wrapping_sub((b >> j) as u16 & 1);
+            r[i] = mask & ((Q as u16 + 1) / 2);
+        }
+    }
+}
+
+pub fn tomsg(a: &Poly, msg: &mut [u8; SHAREDKEYBYTES]) {
+    for (i, b) in msg.iter_mut().enumerate() {
+        for j in 0..8 {
+            let t = (((freeze(a[8 * i + j]) << 1) + Q as u16 / 2) / Q as u16) & 1;
+            *b |= (t << j) as u8;
+        }
     }
 }
