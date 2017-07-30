@@ -6,7 +6,7 @@ use ::reduce::{ freeze, montgomery_reduce, barrett_reduce };
 pub type PolyVec = [Poly; D];
 
 pub fn compress(a: &PolyVec, r: &mut [u8]) {
-    let mut pos = 0;
+    let mut p = 0;
     for poly in a {
         for i in 0..(N / 8) {
             let mut t = [0; 8];
@@ -14,58 +14,37 @@ pub fn compress(a: &PolyVec, r: &mut [u8]) {
                 t[j] = (((((freeze(poly[8*i+j]) as u32) << 11) + Q as u32 / 2) / Q as u32) & 0x7ff) as u16;
             }
 
-            macro_rules! compress {
-                ( $i:expr ; $e:expr ) => {
-                    r[pos + 11 * i + $i] = $e as u8;
-                };
-                ( $i:expr ; $a:expr, $ax:expr ) => {
-                    compress!($i; (t[$a] >> $ax));
-                };
-                ( $i:expr ; $a:expr, $ax:expr; $b:expr, $bx:expr, $by:expr ) => {
-                    compress!($i; ((t[$a] >> $ax) | ((t[$b] & $bx) << $by)));
-                }
-            }
-
-            compress!( 0; 0,  0);
-            compress!( 1; 0,  8; 1, 0x1f, 3);
-            compress!( 2; 1,  5; 2, 0x03, 6);
-            compress!( 3; 2,  2);
-            compress!( 4; 2, 10; 3, 0x7f, 1);
-            compress!( 5; 3,  7; 4, 0x0f, 4);
-            compress!( 6; 4,  4; 5, 0x01, 7);
-            compress!( 7; 5,  1);
-            compress!( 8; 5,  9; 6, 0x3f, 2);
-            compress!( 9; 6,  6; 7, 0x07, 5);
-            compress!(10; 7,  3);
+            r[p+11*i+ 0] = ( t[0] & 0xff) as u8;
+            r[p+11*i+ 1] = ((t[0] >>  8) | ((t[1] & 0x1f) << 3)) as u8;
+            r[p+11*i+ 2] = ((t[1] >>  5) | ((t[2] & 0x03) << 6)) as u8;
+            r[p+11*i+ 3] = ((t[2] >>  2) & 0xff) as u8;
+            r[p+11*i+ 4] = ((t[2] >> 10) | ((t[3] & 0x7f) << 1)) as u8;
+            r[p+11*i+ 5] = ((t[3] >>  7) | ((t[4] & 0x0f) << 4)) as u8;
+            r[p+11*i+ 6] = ((t[4] >>  4) | ((t[5] & 0x01) << 7)) as u8;
+            r[p+11*i+ 7] = ((t[5] >>  1) & 0xff) as u8;
+            r[p+11*i+ 8] = ((t[5] >>  9) | ((t[6] & 0x3f) << 2)) as u8;
+            r[p+11*i+ 9] = ((t[6] >>  6) | ((t[7] & 0x07) << 5)) as u8;
+            r[p+11*i+10] = ((t[7] >>  3)) as u8;
         }
-        pos += 352;
+        p += 352;
     }
 }
 
 
 pub fn decompress(r: &mut PolyVec, a: &[u8]) {
-    let mut pos = 0;
+    let mut p = 0;
     for poly in r {
         for i in 0..(N / 8) {
-            macro_rules! decompress {
-                ( $i:expr; $e:expr ) => {
-                    poly[pos + 8 * i + $i] = ((($e * Q as u32) + 1024) >> 11) as u16;
-                };
-                ( $i:expr ; $a:expr, $ax:expr ; $( $b:expr, $bx:expr, $by:expr );* ) => {
-                    decompress!($i; (((a[11 * i + $a] as u32) >> $ax) $( | ((a[11 * i + $b] as u32 & $bx) << $by) )* ));
-                };
-            }
-
-            decompress!(0; 0, 0;  1, 0x07, 8);
-            decompress!(1; 1, 3;  2, 0x3f, 5);
-            decompress!(2; 2, 6;  3, 0xff, 2; 4, 0x01, 10);
-            decompress!(3; 4, 1;  5, 0x0f, 7);
-            decompress!(4; 5, 4;  6, 0x7f, 4);
-            decompress!(5; 6, 7;  7, 0xff, 1; 8, 0x03,  9);
-            decompress!(6; 8, 2;  9, 0x1f, 6);
-            decompress!(7; 9, 5; 10, 0xff, 3);
+            poly[8*i+0] =  ((((a[p+11*i+ 0] as u16)       | (((a[p+11*i+ 1] as u16) & 0x07) << 8)) * Q as u16) +1024) >> 11;
+            poly[8*i+1] = (((((a[p+11*i+ 1] as u16) >> 3) | (((a[p+11*i+ 2] as u16) & 0x3f) << 5)) * Q as u16) +1024) >> 11;
+            poly[8*i+2] = (((((a[p+11*i+ 2] as u16) >> 6) | (((a[p+11*i+ 3] as u16) & 0xff) << 2)  | (((a[p+11*i+ 4] as u16) & 0x01) << 10)) * Q as u16) + 1024) >> 11;
+            poly[8*i+3] = (((((a[p+11*i+ 4] as u16) >> 1) | (((a[p+11*i+ 5] as u16) & 0x0f) << 7)) * Q as u16) + 1024) >> 11;
+            poly[8*i+4] = (((((a[p+11*i+ 5] as u16) >> 4) | (((a[p+11*i+ 6] as u16) & 0x7f) << 4)) * Q as u16) + 1024) >> 11;
+            poly[8*i+5] = (((((a[p+11*i+ 6] as u16) >> 7) | (((a[p+11*i+ 7] as u16) & 0xff) << 1)  | (((a[p+11*i+ 8] as u16) & 0x03) <<  9)) * Q as u16) + 1024) >> 11;
+            poly[8*i+6] = (((((a[p+11*i+ 8] as u16) >> 2) | (((a[p+11*i+ 9] as u16) & 0x1f) << 6)) * Q as u16) + 1024) >> 11;
+            poly[8*i+7] = (((((a[p+11*i+ 9] as u16) >> 5) | (((a[p+11*i+10] as u16) & 0xff) << 3)) * Q as u16) + 1024) >> 11;
         }
-        pos += 352;
+        p += 352;
     }
 }
 
