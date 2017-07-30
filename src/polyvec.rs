@@ -85,8 +85,8 @@ pub fn pointwise_acc(r: &mut Poly, a: &PolyVec, b: &PolyVec) {
     }
 }
 
-pub fn add(r: &mut PolyVec, a: &PolyVec, b: &PolyVec) {
+pub fn add(r: &mut PolyVec, b: &PolyVec) {
     for i in 0..D {
-        poly::add(&mut r[i], &a[i], &b[i]);
+        poly::add(&mut r[i], &b[i]);
     }
 }

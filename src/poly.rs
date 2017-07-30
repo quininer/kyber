@@ -101,15 +101,15 @@ pub fn invntt(poly: &mut Poly) {
     mul_coefficients(poly, &PSIS_INV_MONTGOMERY);
 }
 
-pub fn add(r: &mut Poly, a: &Poly, b: &Poly) {
+pub fn add(r: &mut Poly, b: &Poly) {
     for i in 0..N {
-        r[i] = barrett_reduce(a[i] + b[i]);
+        r[i] = barrett_reduce(r[i] + b[i]);
     }
 }
 
-pub fn sub(r: &mut Poly, a: &Poly, b: &Poly) {
+pub fn sub(r: &mut Poly, b: &Poly) {
     for i in 0..N {
-        r[i] = barrett_reduce(a[i] + 3 * Q as u16 - b[i]);
+        r[i] = barrett_reduce(r[i] + 3 * Q as u16 - b[i]);
     }
 }
 
