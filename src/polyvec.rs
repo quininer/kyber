@@ -48,30 +48,35 @@ pub fn decompress(r: &mut PolyVec, a: &[u8]) {
     }
 }
 
+#[inline]
 pub fn tobytes(a: &PolyVec, r: &mut [u8]) {
     for (i, poly) in a.iter().enumerate() {
         poly::tobytes(poly, &mut r[i * POLYBYTES..][..POLYBYTES]);
     }
 }
 
+#[inline]
 pub fn frombytes(r: &mut PolyVec, a: &[u8]) {
     for (i ,poly) in r.iter_mut().enumerate() {
         poly::frombytes(poly, &a[i * POLYBYTES..][..POLYBYTES])
     }
 }
 
+#[inline]
 pub fn ntt(r: &mut PolyVec) {
     for poly in r {
         poly::ntt(poly);
     }
 }
 
+#[inline]
 pub fn invntt(r: &mut PolyVec) {
     for poly in r {
         poly::invntt(poly);
     }
 }
 
+#[inline]
 pub fn pointwise_acc(r: &mut Poly, a: &PolyVec, b: &PolyVec) {
     for j in 0..N {
         let mut tmp = 0;
@@ -85,6 +90,7 @@ pub fn pointwise_acc(r: &mut Poly, a: &PolyVec, b: &PolyVec) {
     }
 }
 
+#[inline]
 pub fn add(r: &mut PolyVec, b: &PolyVec) {
     for i in 0..D {
         poly::add(&mut r[i], &b[i]);

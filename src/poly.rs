@@ -90,29 +90,34 @@ pub fn getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
     cbd(poly, &buf);
 }
 
+#[inline]
 pub fn ntt(poly: &mut Poly) {
     mul_coefficients(poly, &PSIS_BITREV_MONTGOMERY);
     fft(poly, &OMEGAS_MONTGOMER);
 }
 
+#[inline]
 pub fn invntt(poly: &mut Poly) {
     bitrev_vector(poly);
     fft(poly, &OMEGAS_INV_BITREV_MONTGOMERY);
     mul_coefficients(poly, &PSIS_INV_MONTGOMERY);
 }
 
+#[inline]
 pub fn add(r: &mut Poly, b: &Poly) {
     for i in 0..N {
         r[i] = barrett_reduce(r[i] + b[i]);
     }
 }
 
+#[inline]
 pub fn sub(r: &mut Poly, b: &Poly) {
     for i in 0..N {
         r[i] = barrett_reduce(r[i] + 3 * Q as u16 - b[i]);
     }
 }
 
+#[inline]
 pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
     for (i, b) in msg.iter().enumerate() {
         for j in 0..8 {
@@ -122,6 +127,7 @@ pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
     }
 }
 
+#[inline]
 pub fn tomsg(a: &Poly, msg: &mut [u8; SHAREDKEYBYTES]) {
     for (i, b) in msg.iter_mut().enumerate() {
         for j in 0..8 {

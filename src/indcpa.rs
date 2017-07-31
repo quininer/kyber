@@ -1,6 +1,5 @@
 use rand::Rng;
 use byteorder::{ ByteOrder, LittleEndian };
-use tiny_keccak::Keccak;
 use sp800_185::CShake;
 use ::ntt::bitrev_vector;
 use ::poly::{ self, Poly };
@@ -13,29 +12,35 @@ use ::params::{
 };
 
 
+#[inline]
 pub fn pack_sk(r: &mut [u8], sk: &PolyVec) {
     polyvec::tobytes(sk, r);
 }
 
+#[inline]
 pub fn unpack_sk(sk: &mut PolyVec, a: &[u8]) {
     polyvec::frombytes(sk, a);
 }
 
+#[inline]
 pub fn pack_pk(r: &mut [u8], pk: &PolyVec, seed: &[u8]) {
     polyvec::compress(pk, r);
     r[POLYBYTES..POLYVECCOMPRESSEDBYTES].copy_from_slice(seed);
 }
 
+#[inline]
 pub fn unpack_pk(pk: &mut PolyVec, seed: &mut [u8], packedpk: &[u8]) {
     polyvec::decompress(pk, packedpk);
     seed[..SEEDBYTES].copy_from_slice(&packedpk[POLYVECCOMPRESSEDBYTES..SEEDBYTES]);
 }
 
+#[inline]
 pub fn pack_ciphertext(r: &mut [u8], b: &PolyVec, v: &Poly) {
     polyvec::compress(b, r);
     poly::compress(v, &mut r[POLYVECCOMPRESSEDBYTES..]);
 }
 
+#[inline]
 pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8]) {
     polyvec::decompress(b, &r[..POLYVECCOMPRESSEDBYTES]);
     poly::decompress(v, &r[POLYVECCOMPRESSEDBYTES..]);
@@ -85,9 +90,7 @@ pub fn keypair(rng: &mut Rng, sk: &mut [u8], pk: &mut [u8]) {
 
     rng.fill_bytes(&mut seed);
     rng.fill_bytes(&mut noiseseed);
-    let mut shake = Keccak::new_shake128();
-    shake.update(&seed);
-    shake.finalize(&mut seed);
+    shake128!(&mut seed; &seed);
 
     gen_matrix(&mut a, &seed, false);
 

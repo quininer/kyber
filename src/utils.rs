@@ -1,3 +1,14 @@
+macro_rules! shake128 {
+    ( $output:expr; $( $input:expr ),* ) => {
+        let mut shake = ::tiny_keccak::Keccak::new_shake128();
+        $(
+            shake.update($input);
+        )*
+        shake.finalize($output);
+    }
+}
+
+
 pub fn eq(a: &[u8], b: &[u8]) -> bool {
     use std::ops::BitOr;
 
@@ -7,21 +18,11 @@ pub fn eq(a: &[u8], b: &[u8]) -> bool {
         .eq(&0)
 }
 
-fn select_u8(flag: u8, x: u8, y: u8) -> u8 {
-    ((::std::u8::MAX ^ flag.wrapping_sub(1)) & x)
-        | (flag.wrapping_sub(1) & y)
-}
-
-pub fn select_mov(r: &mut [u8], x: &[u8], flag: u8) {
+pub fn select_mov(r: &mut [u8], x: &[u8], flag: bool) {
+    let flag = ::std::u8::MIN.wrapping_sub((!flag) as u8);
     for (r, &x) in r.iter_mut().zip(x) {
-        *r = select_u8(flag, *r, x);
+        *r ^= flag & (x ^ *r);
     }
-}
-
-#[test]
-fn test_select_u8() {
-    assert_eq!(select_u8(0, 1, 2), 2);
-    assert_eq!(select_u8(1, 3, 4), 3);
 }
 
 #[test]
@@ -33,10 +34,10 @@ fn test_verify_select_mov() {
 
 
     let flag = eq(&a, &a);
-    select_mov(&mut r, &x, flag as u8);
+    select_mov(&mut r, &x, flag);
     assert_eq!(r, [0, 0, 0]);
 
     let flag = eq(&a, &b);
-    select_mov(&mut r, &x, flag as u8);
+    select_mov(&mut r, &x, flag);
     assert_eq!(r, x);
 }
