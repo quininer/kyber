@@ -35,7 +35,7 @@ pub fn bitrev_vector(poly: &mut [u16; N]) {
 
 pub fn mul_coefficients(poly: &mut [u16; N], factors: &[u16; N]) {
     for i in 0..N {
-        poly[i] = montgomery_reduce((poly[i] * factors[i]) as u32);
+        poly[i] = montgomery_reduce(poly[i] as u32 * factors[i] as u32);
     }
 }
 

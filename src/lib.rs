@@ -14,3 +14,4 @@ pub mod ntt;
 pub mod cbd;
 pub mod indcpa;
 pub mod kyber;
+pub mod kex;

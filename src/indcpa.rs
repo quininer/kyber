@@ -47,7 +47,7 @@ pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8]) {
 }
 
 pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
-    const SHAKE128_RATE: usize = 0;
+    const SHAKE128_RATE: usize = 168;
 
     for i in 0..D {
         for j in 0..D {
