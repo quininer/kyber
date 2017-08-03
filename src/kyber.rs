@@ -8,8 +8,8 @@ use ::params::{
 use ::{ indcpa, utils };
 
 
-pub fn keypair(rng: &mut Rng, sk: &mut [u8], pk: &mut [u8]) {
-    indcpa::keypair(rng, sk, pk);
+pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
+    indcpa::keypair(rng, pk, sk);
     sk[INDCPA_SECRETKEYBYTES..][..INDCPA_PUBLICKEYBYTES].copy_from_slice(pk);
 
     shake128!(&mut sk[SECRETKEYBYTES-64..][..32]; pk);
@@ -38,7 +38,7 @@ pub fn enc(rng: &mut Rng, c: &mut [u8], k: &mut [u8], pk: &[u8]) {
 
 pub fn dec(k: &mut [u8], c: &[u8], sk: &[u8]) {
     let mut cmp = [0; BYTES];
-    let mut buf = [0; 32];
+    let mut buf = [0; SHAREDKEYBYTES];
     let mut buf2 = [0; 32];
     let mut krq = [0; 96];
     let pk = &sk[INDCPA_SECRETKEYBYTES..][..INDCPA_PUBLICKEYBYTES];

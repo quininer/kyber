@@ -7,7 +7,7 @@ use ::polyvec::{ self, PolyVec };
 use ::params::{
     N, D, Q,
     SHAREDKEYBYTES,
-    POLYBYTES, POLYVECCOMPRESSEDBYTES,
+    POLYVECCOMPRESSEDBYTES,
     SEEDBYTES, COINBYTES
 };
 
@@ -25,13 +25,13 @@ pub fn unpack_sk(sk: &mut PolyVec, a: &[u8]) {
 #[inline]
 pub fn pack_pk(r: &mut [u8], pk: &PolyVec, seed: &[u8]) {
     polyvec::compress(pk, r);
-    r[POLYBYTES..POLYVECCOMPRESSEDBYTES].copy_from_slice(seed);
+    r[POLYVECCOMPRESSEDBYTES..][..SEEDBYTES].copy_from_slice(seed);
 }
 
 #[inline]
 pub fn unpack_pk(pk: &mut PolyVec, seed: &mut [u8], packedpk: &[u8]) {
     polyvec::decompress(pk, packedpk);
-    seed[..SEEDBYTES].copy_from_slice(&packedpk[POLYVECCOMPRESSEDBYTES..SEEDBYTES]);
+    seed[..SEEDBYTES].copy_from_slice(&packedpk[POLYVECCOMPRESSEDBYTES..][..SEEDBYTES]);
 }
 
 #[inline]
@@ -62,7 +62,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
             cshake.finalize(&mut buf);
 
             while ctr < N {
-                let val = LittleEndian::read_u16(&buf[pos..]);
+                let val = LittleEndian::read_u16(&buf[pos..]) & 0x1fff;
                 if val < Q as u16 {
                     a[i][j][ctr] = val;
                     ctr += 1;
@@ -79,7 +79,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
     }
 }
 
-pub fn keypair(rng: &mut Rng, sk: &mut [u8], pk: &mut [u8]) {
+pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
     let mut seed = [0; SEEDBYTES];
     let mut noiseseed = [0; COINBYTES];
     let mut a = [[[0; N]; D]; D];

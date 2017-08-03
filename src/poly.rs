@@ -1,6 +1,6 @@
 use sp800_185::CShake;
 use ::params::{
-    N, Q,
+    N, Q, NOISESEEDBYTES,
     SHAREDKEYBYTES,
     PSIS_BITREV_MONTGOMERY, OMEGAS_MONTGOMER,
     PSIS_INV_MONTGOMERY, OMEGAS_INV_BITREV_MONTGOMERY
@@ -33,10 +33,10 @@ pub fn decompress(poly: &mut Poly, buf: &[u8]) {
     for i in (0..N).step_by(8) {
         poly[i+0] =  ((((buf[a+0] as u16) & 7) * Q as u16) + 4)>> 3;
         poly[i+1] = (((((buf[a+0] as u16) >> 3) & 7) * Q as u16)+ 4) >> 3;
-        poly[i+2] = (((((buf[a+0] as u16) >> 6) | (((buf[1] as u16) << 2) & 4)) * Q as u16) + 4)>> 3;
+        poly[i+2] = (((((buf[a+0] as u16) >> 6) | (((buf[a+1] as u16) << 2) & 4)) * Q as u16) + 4)>> 3;
         poly[i+3] = (((((buf[a+1] as u16) >> 1) & 7) * Q as u16) + 4)>> 3;
         poly[i+4] = (((((buf[a+1] as u16) >> 4) & 7) * Q as u16) + 4)>> 3;
-        poly[i+5] = (((((buf[a+1] as u16) >> 7) | (((buf[2] as u16) << 1) & 6)) * Q as u16) + 4)>> 3;
+        poly[i+5] = (((((buf[a+1] as u16) >> 7) | (((buf[a+2] as u16) << 1) & 6)) * Q as u16) + 4)>> 3;
         poly[i+6] = (((((buf[a+2] as u16) >> 2) & 7) * Q as u16) + 4)>> 3;
         poly[i+7] = (((((buf[a+2] as u16) >> 5)) * Q as u16) + 4)>> 3;
         a += 3;
@@ -84,7 +84,7 @@ pub fn getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
     let mut buf = [0; N];
 
     let mut cshake = CShake::new_cshake128(&[], &[nonce, 0x00]);
-    cshake.update(seed);
+    cshake.update(&seed[..NOISESEEDBYTES]);
     cshake.finalize(&mut buf);
 
     cbd(poly, &buf);
@@ -122,7 +122,7 @@ pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
     for (i, b) in msg.iter().enumerate() {
         for j in 0..8 {
             let mask = ::std::u16::MIN.wrapping_sub((b >> j) as u16 & 1);
-            r[i] = mask & ((Q as u16 + 1) / 2);
+            r[8 * i + j] = mask & ((Q as u16 + 1) / 2);
         }
     }
 }
@@ -130,8 +130,9 @@ pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
 #[inline]
 pub fn tomsg(a: &Poly, msg: &mut [u8; SHAREDKEYBYTES]) {
     for (i, b) in msg.iter_mut().enumerate() {
+        *b = 0;
         for j in 0..8 {
-            let t = (((freeze(a[8 * i + j]) << 1) + Q as u16 / 2) / Q as u16) & 1;
+            let t = (freeze(a[8 * i + j]) << 1).wrapping_add(Q as u16 / 2).wrapping_div(Q as u16) & 1;
             *b |= (t << j) as u8;
         }
     }

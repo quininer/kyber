@@ -7,9 +7,9 @@ pub type PolyVec = [Poly; D];
 
 pub fn compress(a: &PolyVec, r: &mut [u8]) {
     let mut p = 0;
+    let mut t = [0; 8];
     for poly in a {
         for i in 0..(N / 8) {
-            let mut t = [0; 8];
             for j in 0..8 {
                 t[j] = (((((freeze(poly[8*i+j]) as u32) << 11) + Q as u32 / 2) / Q as u32) & 0x7ff) as u16;
             }
@@ -35,14 +35,14 @@ pub fn decompress(r: &mut PolyVec, a: &[u8]) {
     let mut p = 0;
     for poly in r {
         for i in 0..(N / 8) {
-            poly[8*i+0] =  ((((a[p+11*i+ 0] as u16)       | (((a[p+11*i+ 1] as u16) & 0x07) << 8)) * Q as u16) +1024) >> 11;
-            poly[8*i+1] = (((((a[p+11*i+ 1] as u16) >> 3) | (((a[p+11*i+ 2] as u16) & 0x3f) << 5)) * Q as u16) +1024) >> 11;
-            poly[8*i+2] = (((((a[p+11*i+ 2] as u16) >> 6) | (((a[p+11*i+ 3] as u16) & 0xff) << 2)  | (((a[p+11*i+ 4] as u16) & 0x01) << 10)) * Q as u16) + 1024) >> 11;
-            poly[8*i+3] = (((((a[p+11*i+ 4] as u16) >> 1) | (((a[p+11*i+ 5] as u16) & 0x0f) << 7)) * Q as u16) + 1024) >> 11;
-            poly[8*i+4] = (((((a[p+11*i+ 5] as u16) >> 4) | (((a[p+11*i+ 6] as u16) & 0x7f) << 4)) * Q as u16) + 1024) >> 11;
-            poly[8*i+5] = (((((a[p+11*i+ 6] as u16) >> 7) | (((a[p+11*i+ 7] as u16) & 0xff) << 1)  | (((a[p+11*i+ 8] as u16) & 0x03) <<  9)) * Q as u16) + 1024) >> 11;
-            poly[8*i+6] = (((((a[p+11*i+ 8] as u16) >> 2) | (((a[p+11*i+ 9] as u16) & 0x1f) << 6)) * Q as u16) + 1024) >> 11;
-            poly[8*i+7] = (((((a[p+11*i+ 9] as u16) >> 5) | (((a[p+11*i+10] as u16) & 0xff) << 3)) * Q as u16) + 1024) >> 11;
+            poly[8*i+0] = ( ((((a[p+11*i+ 0] as u32)       | (((a[p+11*i+ 1] as u32) & 0x07) << 8)) * Q as u32) +1024) >> 11) as u16;
+            poly[8*i+1] = ((((((a[p+11*i+ 1] as u32) >> 3) | (((a[p+11*i+ 2] as u32) & 0x3f) << 5)) * Q as u32) +1024) >> 11) as u16;
+            poly[8*i+2] = ((((((a[p+11*i+ 2] as u32) >> 6) | (((a[p+11*i+ 3] as u32) & 0xff) << 2)  | (((a[p+11*i+ 4] as u32) & 0x01) << 10)) * Q as u32) + 1024) >> 11) as u16;
+            poly[8*i+3] = ((((((a[p+11*i+ 4] as u32) >> 1) | (((a[p+11*i+ 5] as u32) & 0x0f) << 7)) * Q as u32) + 1024) >> 11) as u16;
+            poly[8*i+4] = ((((((a[p+11*i+ 5] as u32) >> 4) | (((a[p+11*i+ 6] as u32) & 0x7f) << 4)) * Q as u32) + 1024) >> 11) as u16;
+            poly[8*i+5] = ((((((a[p+11*i+ 6] as u32) >> 7) | (((a[p+11*i+ 7] as u32) & 0xff) << 1)  | (((a[p+11*i+ 8] as u32) & 0x03) <<  9)) * Q as u32) + 1024) >> 11) as u16;
+            poly[8*i+6] = ((((((a[p+11*i+ 8] as u32) >> 2) | (((a[p+11*i+ 9] as u32) & 0x1f) << 6)) * Q as u32) + 1024) >> 11) as u16;
+            poly[8*i+7] = ((((((a[p+11*i+ 9] as u32) >> 5) | (((a[p+11*i+10] as u32) & 0xff) << 3)) * Q as u32) + 1024) >> 11) as u16;
         }
         p += 352;
     }

@@ -8,3 +8,6 @@ rand = "*"
 tiny-keccak = "*"
 sp800-185 = "*"
 byteorder = "*"
+
+[dev-dependencies]
+data-encoding = "2.0.0-rc"
