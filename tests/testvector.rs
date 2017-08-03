@@ -39,10 +39,9 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), DecodeError> {
         .enumerate()
     {
         match i {
-            0...2 => rng.0.append(&mut line?),
+            0...2 | 5 => rng.0.append(&mut line?),
             3 => vecs.pk.append(&mut line?),
             4 => vecs.sk_a.append(&mut line?),
-            5 => rng.0.append(&mut line?),
             6 => vecs.sendb.append(&mut line?),
             7 => vecs.key_b.append(&mut line?),
             8 => vecs.key_a.append(&mut line?),

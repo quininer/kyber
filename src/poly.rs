@@ -63,7 +63,7 @@ pub fn tobytes(poly: &Poly, buf: &mut [u8]) {
         buf[13*i+ 9] = ((t[5] >>  7) | ((t[6] & 0x03) << 6)) as u8;
         buf[13*i+10] = ((t[6] >>  2) & 0xff) as u8;
         buf[13*i+11] = ((t[6] >> 10) | ((t[7] & 0x1f) << 3)) as u8;
-        buf[13*i+12] = ((t[7] >>  5)) as u8;
+        buf[13*i+12] = ( t[7] >>  5) as u8;
     }
 }
 

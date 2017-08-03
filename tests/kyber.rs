@@ -19,6 +19,7 @@ fn test_kyber() {
         kyber::kyber::enc(&mut rng, &mut sendb, &mut key_b, &pk);
         kyber::kyber::dec(&mut key_a, &sendb, &sk_a);
 
+        assert!(key_a.iter().any(|&n| n != 0));
         assert_eq!(key_a, key_b);
     }
 }
