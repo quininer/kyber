@@ -17,7 +17,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
     rng.fill_bytes(&mut sk[SECRETKEYBYTES-SHAREDKEYBYTES..][..SHAREDKEYBYTES]);
 }
 
-pub fn enc(rng: &mut Rng, c: &mut [u8], k: &mut [u8], pk: &[u8]) {
+pub fn enc(rng: &mut Rng, c: &mut [u8], k: &mut [u8; SHAREDKEYBYTES], pk: &[u8]) {
     let mut buf = [0; SHAREDKEYBYTES];
     let mut buf2 = [0; 32];
     let mut krq = [0; 96];
@@ -33,10 +33,10 @@ pub fn enc(rng: &mut Rng, c: &mut [u8], k: &mut [u8], pk: &[u8]) {
     c[INDCPA_BYTES..][..32].copy_from_slice(&krq[64..]);
 
     shake128!(&mut krq[32..][..32]; &c[..BYTES]);
-    shake128!(&mut k[..SHAREDKEYBYTES]; &krq[..64]);
+    shake128!(k; &krq[..64]);
 }
 
-pub fn dec(k: &mut [u8], c: &[u8], sk: &[u8]) {
+pub fn dec(k: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
     let mut cmp = [0; BYTES];
     let mut buf = [0; SHAREDKEYBYTES];
     let mut buf2 = [0; 32];
@@ -58,5 +58,5 @@ pub fn dec(k: &mut [u8], c: &[u8], sk: &[u8]) {
 
     utils::select_mov(&mut krq, &sk[SECRETKEYBYTES-SHAREDKEYBYTES..][..SHAREDKEYBYTES], flag);
 
-    shake128!(&mut k[..SHAREDKEYBYTES]; &krq[..64]);
+    shake128!(k; &krq[..64]);
 }

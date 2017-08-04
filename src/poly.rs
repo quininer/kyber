@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use sp800_185::CShake;
 use ::params::{
     N, Q, NOISESEEDBYTES,
@@ -16,7 +17,7 @@ pub fn compress(poly: &Poly, buf: &mut [u8]) {
     let mut t = [0; 8];
     let mut k = 0;
 
-    for i in (0..N).step_by(8) {
+    for i in Itertools::step(0..N, 8) {
         for j in 0..8 {
             t[j] = ((((freeze(poly[i + j]) as u32) << 3) + Q as u32 / 2) / Q as u32) & 7;
         }
@@ -30,7 +31,7 @@ pub fn compress(poly: &Poly, buf: &mut [u8]) {
 
 pub fn decompress(poly: &mut Poly, buf: &[u8]) {
     let mut a = 0;
-    for i in (0..N).step_by(8) {
+    for i in Itertools::step(0..N, 8) {
         poly[i+0] =  ((((buf[a+0] as u16) & 7) * Q as u16) + 4)>> 3;
         poly[i+1] = (((((buf[a+0] as u16) >> 3) & 7) * Q as u16)+ 4) >> 3;
         poly[i+2] = (((((buf[a+0] as u16) >> 6) | (((buf[a+1] as u16) << 2) & 4)) * Q as u16) + 4)>> 3;

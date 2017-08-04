@@ -4,10 +4,11 @@ version = "0.1.0"
 authors = ["quininer kel <quininer@live.com>"]
 
 [dependencies]
-rand = "*"
-tiny-keccak = "*"
-sp800-185 = "*"
-byteorder = "*"
+rand = "0.3"
+tiny-keccak = "1.3"
+sp800-185 = "0.1"
+byteorder = "1.1"
+itertools = "0.6"
 
 [dev-dependencies]
 data-encoding = "2.0.0-rc"

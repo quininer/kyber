@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use ::params::{ N, Q };
 use ::reduce::{ montgomery_reduce, barrett_reduce };
 
@@ -42,7 +43,7 @@ pub fn mul_coefficients(poly: &mut [u16; N], factors: &[u16; N]) {
 pub fn ntt(a: &mut [u16; N], omega: &[u16; N / 2]) {
     for level in 0..8 {
         for start in 0..(1 << level) {
-            for (jt, j) in (start..(N - 1)).step_by(2 * (1 << level)).enumerate() {
+            for (jt, j) in Itertools::step(start..(N - 1), 2 * (1 << level)).enumerate() {
                 let w = omega[jt];
                 let tmp = a[j];
 

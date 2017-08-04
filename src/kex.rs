@@ -1,52 +1,96 @@
 use rand::Rng;
-use ::params::{ PUBLICKEYBYTES, SHAREDKEYBYTES, BYTES };
+use ::params::{ PUBLICKEYBYTES, SECRETKEYBYTES, SHAREDKEYBYTES, BYTES };
 use ::kyber;
 
 
 pub mod uake {
+    use ::params::{ UAKE_SENDABYTES, UAKE_SENDBBYTES };
     use super::*;
 
-    pub fn init_a(rng: &mut Rng, send: &mut [u8], tk: &mut [u8], sk: &mut [u8], pkb: &[u8]) {
+    pub fn init_a(
+        rng: &mut Rng,
+        send: &mut [u8; UAKE_SENDABYTES],
+        tk: &mut [u8; SHAREDKEYBYTES],
+        sk: &mut [u8; SECRETKEYBYTES],
+        pkb: &[u8; PUBLICKEYBYTES]
+    ) {
         kyber::keypair(rng, send, sk);
         kyber::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
     }
 
-    pub fn shared_b(rng: &mut Rng, send: &mut [u8], k: &mut [u8], recv: &[u8], skb: &[u8]) {
-        let mut buf = [0; 2 * SHAREDKEYBYTES];
+    pub fn shared_b(
+        rng: &mut Rng,
+        send: &mut [u8; UAKE_SENDBBYTES],
+        k: &mut [u8; SHAREDKEYBYTES],
+        recv: &[u8; UAKE_SENDABYTES],
+        skb: &[u8; SECRETKEYBYTES]
+    ) {
+        let mut buf = [0; SHAREDKEYBYTES];
+        let mut buf2 = [0; SHAREDKEYBYTES];
         kyber::enc(rng, send, &mut buf, recv);
-        kyber::dec(&mut buf[SHAREDKEYBYTES..], &recv[PUBLICKEYBYTES..], skb);
-        shake128!(k; &buf);
+        kyber::dec(&mut buf2, &recv[PUBLICKEYBYTES..], skb);
+        shake128!(k; &buf, &buf2);
     }
 
-    pub fn shared_a(k: &mut [u8], recv: &[u8], tk: &[u8], sk: &[u8]) {
-        let mut buf = [0; 2 * SHAREDKEYBYTES];
+    pub fn shared_a(
+        k: &mut [u8; SHAREDKEYBYTES],
+        recv: &[u8; UAKE_SENDBBYTES],
+        tk: &[u8; SHAREDKEYBYTES],
+        sk: &[u8; SECRETKEYBYTES]
+    ) {
+        let mut buf = [0; SHAREDKEYBYTES];
+        let mut buf2 = [0; SHAREDKEYBYTES];
         kyber::dec(&mut buf, recv, sk);
-        buf[SHAREDKEYBYTES..].copy_from_slice(&tk[..SHAREDKEYBYTES]);
-        shake128!(k; &buf);
+        buf2.copy_from_slice(&tk[..SHAREDKEYBYTES]);
+        shake128!(k; &buf, &buf2);
     }
 }
 
 pub mod ake {
+    use ::params::{ AKE_SENDABYTES, AKE_SENDBBYTES };
     use super::*;
 
-    pub fn init_a(rng: &mut Rng, send: &mut [u8], tk: &mut [u8], sk: &mut [u8], pkb: &[u8]) {
+    pub fn init_a(
+        rng: &mut Rng,
+        send: &mut [u8; AKE_SENDABYTES],
+        tk: &mut [u8; SHAREDKEYBYTES],
+        sk: &mut [u8; SECRETKEYBYTES],
+        pkb: &[u8; PUBLICKEYBYTES]
+    ) {
         kyber::keypair(rng, send, sk);
         kyber::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
     }
 
-    pub fn shared_b(rng: &mut Rng, send: &mut [u8], k: &mut [u8], recv: &[u8], skb: &[u8], pka: &[u8]) {
-        let mut buf = [0; 3 * SHAREDKEYBYTES];
+    pub fn shared_b(
+        rng: &mut Rng,
+        send: &mut [u8; AKE_SENDBBYTES],
+        k: &mut [u8; SHAREDKEYBYTES],
+        recv: &[u8; AKE_SENDABYTES],
+        skb: &[u8; SECRETKEYBYTES],
+        pka: &[u8; PUBLICKEYBYTES]
+    ) {
+        let mut buf = [0; SHAREDKEYBYTES];
+        let mut buf2 = [0; SHAREDKEYBYTES];
+        let mut buf3 = [0; SHAREDKEYBYTES];
         kyber::enc(rng, send, &mut buf, recv);
-        kyber::enc(rng, &mut send[BYTES..], &mut buf[SHAREDKEYBYTES..], pka);
-        kyber::dec(&mut buf[2 * SHAREDKEYBYTES..], &recv[PUBLICKEYBYTES..], skb);
-        shake128!(k; &buf);
+        kyber::enc(rng, &mut send[BYTES..], &mut buf2, pka);
+        kyber::dec(&mut buf3, &recv[PUBLICKEYBYTES..], skb);
+        shake128!(k; &buf, &buf2, &buf3);
     }
 
-    pub fn shared_a(k: &mut [u8], recv: &[u8], tk: &[u8], sk: &[u8], ska: &[u8]) {
-        let mut buf = [0; 3 * SHAREDKEYBYTES];
+    pub fn shared_a(
+        k: &mut [u8; SHAREDKEYBYTES],
+        recv: &[u8; AKE_SENDBBYTES],
+        tk: &[u8; SHAREDKEYBYTES],
+        sk: &[u8; SECRETKEYBYTES],
+        ska: &[u8; SECRETKEYBYTES]
+    ) {
+        let mut buf = [0; SHAREDKEYBYTES];
+        let mut buf2 = [0; SHAREDKEYBYTES];
+        let mut buf3 = [0; SHAREDKEYBYTES];
         kyber::dec(&mut buf, recv, sk);
-        kyber::dec(&mut buf[SHAREDKEYBYTES..], &recv[BYTES..], ska);
-        buf[2 * SHAREDKEYBYTES..].copy_from_slice(&tk[..SHAREDKEYBYTES]);
-        shake128!(k; &buf);
+        kyber::dec(&mut buf2, &recv[BYTES..], ska);
+        buf3.copy_from_slice(&tk[..SHAREDKEYBYTES]);
+        shake128!(k; &buf, &buf2, &buf3);
     }
 }
