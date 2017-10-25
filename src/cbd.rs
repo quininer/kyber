@@ -1,10 +1,10 @@
 use byteorder::{ ByteOrder, LittleEndian };
-use ::params::{ N, K, Q };
+use ::params::{ N, ETA, Q };
 use ::poly::Poly;
 
 
 pub fn cbd(r: &mut Poly, buf: &[u8; N]) {
-    debug_assert_eq!(K, 4);
+    debug_assert_eq!(ETA, 4);
 
     let (mut a, mut b) = ([0; 4], [0; 4]);
 

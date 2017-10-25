@@ -1,9 +1,9 @@
 use ::poly::{ self, Poly };
-use ::params::{ N, D, Q, POLYBYTES };
+use ::params::{ N, K, Q, POLYBYTES };
 use ::reduce::{ freeze, montgomery_reduce, barrett_reduce };
 
 
-pub type PolyVec = [Poly; D];
+pub type PolyVec = [Poly; K];
 
 pub fn compress(a: &PolyVec, r: &mut [u8]) {
     let mut p = 0;
@@ -79,7 +79,7 @@ pub fn invntt(r: &mut PolyVec) {
 #[inline]
 pub fn pointwise_acc(r: &mut Poly, a: &PolyVec, b: &PolyVec) {
     for j in 0..N {
-        let tmp = (0..D)
+        let tmp = (0..K)
             .map(|i| {
                 let t = montgomery_reduce(4613 * u32::from(b[i][j]));
                 montgomery_reduce(u32::from(a[i][j]) * u32::from(t))
@@ -92,7 +92,7 @@ pub fn pointwise_acc(r: &mut Poly, a: &PolyVec, b: &PolyVec) {
 
 #[inline]
 pub fn add(r: &mut PolyVec, b: &PolyVec) {
-    for i in 0..D {
+    for i in 0..K {
         poly::add(&mut r[i], &b[i]);
     }
 }

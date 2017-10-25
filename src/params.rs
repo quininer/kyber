@@ -1,6 +1,6 @@
 pub const N: usize = 256;
-pub const D: usize = 3;
-pub const K: usize = 4; // used in sampler
+pub const K: usize = 3;
+pub const ETA: usize = 4;   //  KYBER768
 pub const Q: usize = 7681;
 
 pub const SEEDBYTES     : usize = 32;
@@ -10,8 +10,8 @@ pub const SHAREDKEYBYTES: usize = 32;
 
 pub const POLYBYTES             : usize = 416;
 pub const POLYCOMPRESSEDBYTES   : usize = 96;
-pub const POLYVECBYTES          : usize = D * POLYBYTES;
-pub const POLYVECCOMPRESSEDBYTES: usize = D * 352;
+pub const POLYVECBYTES          : usize = K * POLYBYTES;
+pub const POLYVECCOMPRESSEDBYTES: usize = K * 352;
 
 pub const INDCPA_MSGBYTES      : usize = 32;
 pub const INDCPA_PUBLICKEYBYTES: usize = POLYVECCOMPRESSEDBYTES + SEEDBYTES;

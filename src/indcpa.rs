@@ -5,7 +5,7 @@ use ::ntt::bitrev_vector;
 use ::poly::{ self, Poly };
 use ::polyvec::{ self, PolyVec };
 use ::params::{
-    N, D, Q,
+    N, K, Q,
     SHAREDKEYBYTES,
     POLYVECCOMPRESSEDBYTES,
     SEEDBYTES, COINBYTES
@@ -49,8 +49,8 @@ pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8]) {
 pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
     const SHAKE128_RATE: usize = 168;
 
-    for i in 0..D {
-        for j in 0..D {
+    for i in 0..K {
+        for j in 0..K {
             let mut sep = [0; 2];
             let dsep = if transposed { j + (i << 8) } else { i + (j << 8) };
             LittleEndian::write_u16(&mut sep, dsep as u16);
@@ -82,10 +82,10 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
 pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
     let mut seed = [0; SEEDBYTES];
     let mut noiseseed = [0; COINBYTES];
-    let mut a = [[[0; N]; D]; D];
-    let mut e = [[0; N]; D];
-    let mut pkpv = [[0; N]; D];
-    let mut skpv = [[0; N]; D];
+    let mut a = [[[0; N]; K]; K];
+    let mut e = [[0; N]; K];
+    let mut pkpv = [[0; N]; K];
+    let mut skpv = [[0; N]; K];
     let mut nonce = 0;
 
     rng.fill_bytes(&mut seed);
@@ -106,7 +106,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
         nonce += 1;
     }
 
-    for i in 0..D {
+    for i in 0..K {
         polyvec::pointwise_acc(&mut pkpv[i], &skpv, &a[i]);
     }
     polyvec::invntt(&mut pkpv);
@@ -118,9 +118,9 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
 
 pub fn enc(c: &mut [u8], m: &[u8; SHAREDKEYBYTES], pk: &[u8], coins: &[u8]) {
     let (mut k, mut v, mut epp) = ([0; N], [0; N], [0; N]);
-    let (mut sp, mut ep, mut bp) = ([[0; N]; D], [[0; N]; D], [[0; N]; D]);
-    let mut pkpv = [[0; N]; D];
-    let mut at = [[[0; N]; D]; D];
+    let (mut sp, mut ep, mut bp) = ([[0; N]; K], [[0; N]; K], [[0; N]; K]);
+    let mut pkpv = [[0; N]; K];
+    let mut at = [[[0; N]; K]; K];
     let mut seed = [0; SEEDBYTES];
     let mut nonce = 0;
 
@@ -145,7 +145,7 @@ pub fn enc(c: &mut [u8], m: &[u8; SHAREDKEYBYTES], pk: &[u8], coins: &[u8]) {
         nonce += 1;
     }
 
-    for i in 0..D {
+    for i in 0..K {
         polyvec::pointwise_acc(&mut bp[i], &sp, &at[i]);
     }
     polyvec::invntt(&mut bp);
@@ -163,7 +163,7 @@ pub fn enc(c: &mut [u8], m: &[u8; SHAREDKEYBYTES], pk: &[u8], coins: &[u8]) {
 }
 
 pub fn dec(m: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
-    let (mut bp, mut skpv) = ([[0; N]; D], [[0; N]; D]);
+    let (mut bp, mut skpv) = ([[0; N]; K], [[0; N]; K]);
     let (mut v, mut mp) = ([0; N], [0; N]);
 
     unpack_ciphertext(&mut bp, &mut v, c);
