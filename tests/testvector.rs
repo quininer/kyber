@@ -5,7 +5,7 @@ extern crate kyber;
 use rand::Rng;
 use data_encoding::{ HEXLOWER, DecodeError };
 
-const TEST_VECTOR: &'static str = include_str!("testvector.txt");
+const TEST_VECTOR: &str = include_str!("testvector.txt");
 
 
 #[derive(Default)]

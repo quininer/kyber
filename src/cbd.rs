@@ -3,7 +3,7 @@ use ::params::{ N, K, Q };
 use ::poly::Poly;
 
 
-pub fn cbd(r: &mut Poly, buf: &[u8]) {
+pub fn cbd(r: &mut Poly, buf: &[u8; N]) {
     debug_assert_eq!(K, 4);
 
     let (mut a, mut b) = ([0; 4], [0; 4]);
@@ -11,7 +11,7 @@ pub fn cbd(r: &mut Poly, buf: &[u8]) {
     for i in 0..(N / 4) {
         let t = LittleEndian::read_u32(&buf[4 * i..]);
         let d = (0..4)
-            .map(|j| (t >> j) & 0x11111111)
+            .map(|j| (t >> j) & 0x1111_1111)
             .sum::<u32>();
 
         a[0] =  d & 0xf;

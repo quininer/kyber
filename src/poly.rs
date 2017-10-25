@@ -19,7 +19,7 @@ pub fn compress(poly: &Poly, buf: &mut [u8]) {
 
     for i in Itertools::step(0..N, 8) {
         for j in 0..8 {
-            t[j] = ((((freeze(poly[i + j]) as u32) << 3) + Q as u32 / 2) / Q as u32) & 7;
+            t[j] = (((u32::from(freeze(poly[i + j])) << 3) + Q as u32 / 2) / Q as u32) & 7;
         }
 
         buf[k]   = ( t[0]       | (t[1] << 3) | (t[2] << 6)) as u8;
@@ -32,14 +32,14 @@ pub fn compress(poly: &Poly, buf: &mut [u8]) {
 pub fn decompress(poly: &mut Poly, buf: &[u8]) {
     let mut a = 0;
     for i in Itertools::step(0..N, 8) {
-        poly[i+0] =  ((((buf[a+0] as u16) & 7) * Q as u16) + 4)>> 3;
-        poly[i+1] = (((((buf[a+0] as u16) >> 3) & 7) * Q as u16)+ 4) >> 3;
-        poly[i+2] = (((((buf[a+0] as u16) >> 6) | (((buf[a+1] as u16) << 2) & 4)) * Q as u16) + 4)>> 3;
-        poly[i+3] = (((((buf[a+1] as u16) >> 1) & 7) * Q as u16) + 4)>> 3;
-        poly[i+4] = (((((buf[a+1] as u16) >> 4) & 7) * Q as u16) + 4)>> 3;
-        poly[i+5] = (((((buf[a+1] as u16) >> 7) | (((buf[a+2] as u16) << 1) & 6)) * Q as u16) + 4)>> 3;
-        poly[i+6] = (((((buf[a+2] as u16) >> 2) & 7) * Q as u16) + 4)>> 3;
-        poly[i+7] = (((((buf[a+2] as u16) >> 5)) * Q as u16) + 4)>> 3;
+        poly[i  ] =  (((u16::from(buf[a  ])       & 7) * Q as u16) + 4)>> 3;
+        poly[i+1] = ((((u16::from(buf[a  ]) >> 3) & 7) * Q as u16) + 4) >> 3;
+        poly[i+2] = ((((u16::from(buf[a  ]) >> 6) | ((u16::from(buf[a+1]) << 2) & 4)) * Q as u16) + 4)>> 3;
+        poly[i+3] = ((((u16::from(buf[a+1]) >> 1) & 7) * Q as u16) + 4)>> 3;
+        poly[i+4] = ((((u16::from(buf[a+1]) >> 4) & 7) * Q as u16) + 4)>> 3;
+        poly[i+5] = ((((u16::from(buf[a+1]) >> 7) | ((u16::from(buf[a+2]) << 1) & 6)) * Q as u16) + 4)>> 3;
+        poly[i+6] = ((((u16::from(buf[a+2]) >> 2) & 7) * Q as u16) + 4)>> 3;
+        poly[i+7] = (( (u16::from(buf[a+2]) >> 5)      * Q as u16) + 4)>> 3;
         a += 3;
     }
 }
@@ -52,7 +52,7 @@ pub fn tobytes(poly: &Poly, buf: &mut [u8]) {
             t[j] = freeze(poly[8 * i + j]);
         }
 
-        buf[13*i+ 0] = ( t[0]        & 0xff) as u8;
+        buf[13*i   ] = ( t[0]        & 0xff) as u8;
         buf[13*i+ 1] = ((t[0] >>  8) | ((t[1] & 0x07) << 5)) as u8;
         buf[13*i+ 2] = ((t[1] >>  3) & 0xff) as u8;
         buf[13*i+ 3] = ((t[1] >> 11) | ((t[2] & 0x3f) << 2)) as u8;
@@ -70,14 +70,14 @@ pub fn tobytes(poly: &Poly, buf: &mut [u8]) {
 
 pub fn frombytes(poly: &mut Poly, buf: &[u8]) {
     for i in 0..(N / 8) {
-        poly[8*i+0] =  (buf[13*i+ 0] as u16)       | (((buf[13*i+ 1] as u16) & 0x1f) << 8);
-        poly[8*i+1] = ((buf[13*i+ 1] as u16) >> 5) | (((buf[13*i+ 2] as u16)       ) << 3) | (((buf[13*i+ 3] as u16) & 0x03) << 11);
-        poly[8*i+2] = ((buf[13*i+ 3] as u16) >> 2) | (((buf[13*i+ 4] as u16) & 0x7f) << 6);
-        poly[8*i+3] = ((buf[13*i+ 4] as u16) >> 7) | (((buf[13*i+ 5] as u16)       ) << 1) | (((buf[13*i+ 6] as u16) & 0x0f) <<  9);
-        poly[8*i+4] = ((buf[13*i+ 6] as u16) >> 4) | (((buf[13*i+ 7] as u16)       ) << 4) | (((buf[13*i+ 8] as u16) & 0x01) << 12);
-        poly[8*i+5] = ((buf[13*i+ 8] as u16) >> 1) | (((buf[13*i+ 9] as u16) & 0x3f) << 7);
-        poly[8*i+6] = ((buf[13*i+ 9] as u16) >> 6) | (((buf[13*i+10] as u16)       ) << 2) | (((buf[13*i+11] as u16) & 0x07) << 10);
-        poly[8*i+7] = ((buf[13*i+11] as u16) >> 3) | (((buf[13*i+12] as u16)       ) << 5);
+        poly[8*i  ] =  u16::from(buf[13*i   ])       | ((u16::from(buf[13*i+ 1]) & 0x1f) << 8);
+        poly[8*i+1] = (u16::from(buf[13*i+ 1]) >> 5) | ((u16::from(buf[13*i+ 2])       ) << 3) | ((u16::from(buf[13*i+ 3]) & 0x03) << 11);
+        poly[8*i+2] = (u16::from(buf[13*i+ 3]) >> 2) | ((u16::from(buf[13*i+ 4]) & 0x7f) << 6);
+        poly[8*i+3] = (u16::from(buf[13*i+ 4]) >> 7) | ((u16::from(buf[13*i+ 5])       ) << 1) | ((u16::from(buf[13*i+ 6]) & 0x0f) <<  9);
+        poly[8*i+4] = (u16::from(buf[13*i+ 6]) >> 4) | ((u16::from(buf[13*i+ 7])       ) << 4) | ((u16::from(buf[13*i+ 8]) & 0x01) << 12);
+        poly[8*i+5] = (u16::from(buf[13*i+ 8]) >> 1) | ((u16::from(buf[13*i+ 9]) & 0x3f) << 7);
+        poly[8*i+6] = (u16::from(buf[13*i+ 9]) >> 6) | ((u16::from(buf[13*i+10])       ) << 2) | ((u16::from(buf[13*i+11]) & 0x07) << 10);
+        poly[8*i+7] = (u16::from(buf[13*i+11]) >> 3) | ((u16::from(buf[13*i+12])       ) << 5);
     }
 }
 
@@ -122,7 +122,7 @@ pub fn sub(r: &mut Poly, b: &Poly) {
 pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
     for (i, b) in msg.iter().enumerate() {
         for j in 0..8 {
-            let mask = ::std::u16::MIN.wrapping_sub((b >> j) as u16 & 1);
+            let mask = ::std::u16::MIN.wrapping_sub(u16::from(b >> j) & 1);
             r[8 * i + j] = mask & ((Q as u16 + 1) / 2);
         }
     }

@@ -36,7 +36,7 @@ pub fn bitrev_vector(poly: &mut [u16; N]) {
 
 pub fn mul_coefficients(poly: &mut [u16; N], factors: &[u16; N]) {
     for i in 0..N {
-        poly[i] = montgomery_reduce(poly[i] as u32 * factors[i] as u32);
+        poly[i] = montgomery_reduce(u32::from(poly[i]) * u32::from(factors[i]));
     }
 }
 
@@ -51,7 +51,7 @@ pub fn ntt(a: &mut [u16; N], omega: &[u16; N / 2]) {
                     if level & 1 != 0 { barrett_reduce(tmp + a[j + (1 << level)]) }
                     else { tmp + a[j + (1 << level)] };
 
-                let t = (w as u32) * ((tmp as u32) + 4 * (Q as u32) - (a[j + (1 << level)] as u32));
+                let t = u32::from(w) * (u32::from(tmp) + 4 * (Q as u32) - u32::from(a[j + (1 << level)]));
                 a[j + (1 << level)] = montgomery_reduce(t);
             }
         }
