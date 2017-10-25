@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use sp800_185::CShake;
 use ::params::{
     N, Q, NOISESEEDBYTES,
     SHAREDKEYBYTES,
@@ -84,9 +83,7 @@ pub fn frombytes(poly: &mut Poly, buf: &[u8]) {
 pub fn getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
     let mut buf = [0; N];
 
-    let mut cshake = CShake::new_cshake128(&[], &[nonce, 0x00]);
-    cshake.update(&seed[..NOISESEEDBYTES]);
-    cshake.finalize(&mut buf);
+    shake256!(&mut buf; &seed[..NOISESEEDBYTES], &[nonce]);
 
     cbd(poly, &buf);
 }

@@ -1,6 +1,6 @@
 use rand::Rng;
 use byteorder::{ ByteOrder, LittleEndian };
-use sp800_185::CShake;
+use tiny_keccak::Keccak;
 use ::ntt::bitrev_vector;
 use ::poly::{ self, Poly };
 use ::polyvec::{ self, PolyVec };
@@ -51,15 +51,16 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
 
     for i in 0..K {
         for j in 0..K {
-            let mut sep = [0; 2];
-            let dsep = if transposed { j + (i << 8) } else { i + (j << 8) };
-            LittleEndian::write_u16(&mut sep, dsep as u16);
-
+            let mut shake = Keccak::new_shake128();
             let (mut nblocks, mut pos, mut ctr) = (4, 0, 0);
             let mut buf = [0; SHAKE128_RATE * 4];
-            let mut cshake = CShake::new_cshake128(&[], &sep);
-            cshake.update(seed);
-            cshake.finalize(&mut buf);
+            let sep = if transposed { [i as u8, j as u8] } else { [j as u8, i as u8] };
+
+            shake.update(seed);
+            shake.update(&sep);
+            shake.pad();
+            shake.keccakf();
+            shake.squeeze(&mut buf);
 
             while ctr < N {
                 let val = LittleEndian::read_u16(&buf[pos..]) & 0x1fff;
@@ -71,7 +72,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
 
                 if pos > SHAKE128_RATE * nblocks - 2 {
                     nblocks = 1;
-                    cshake.squeeze(&mut buf);
+                    shake.squeeze(&mut buf);
                     pos = 0;
                 }
             }
@@ -90,7 +91,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
 
     rng.fill_bytes(&mut seed);
     rng.fill_bytes(&mut noiseseed);
-    shake128!(&mut seed; &seed);
+    shake256!(&mut seed; &seed);
 
     gen_matrix(&mut a, &seed, false);
 

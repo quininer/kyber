@@ -1,6 +1,6 @@
-macro_rules! shake128 {
+macro_rules! shake256 {
     ( $output:expr ; $( $input:expr ),* ) => {
-        let mut shake = ::tiny_keccak::Keccak::new_shake128();
+        let mut shake = ::tiny_keccak::Keccak::new_shake256();
         $(
             shake.update($input);
         )*

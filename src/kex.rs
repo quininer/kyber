@@ -29,7 +29,7 @@ pub mod uake {
         let mut buf2 = [0; SHAREDKEYBYTES];
         kyber::enc(rng, send, &mut buf, recv);
         kyber::dec(&mut buf2, &recv[PUBLICKEYBYTES..], skb);
-        shake128!(k; &buf, &buf2);
+        shake256!(k; &buf, &buf2);
     }
 
     pub fn shared_a(
@@ -42,7 +42,7 @@ pub mod uake {
         let mut buf2 = [0; SHAREDKEYBYTES];
         kyber::dec(&mut buf, recv, sk);
         buf2.copy_from_slice(&tk[..SHAREDKEYBYTES]);
-        shake128!(k; &buf, &buf2);
+        shake256!(k; &buf, &buf2);
     }
 }
 
@@ -75,7 +75,7 @@ pub mod ake {
         kyber::enc(rng, send, &mut buf, recv);
         kyber::enc(rng, &mut send[BYTES..], &mut buf2, pka);
         kyber::dec(&mut buf3, &recv[PUBLICKEYBYTES..], skb);
-        shake128!(k; &buf, &buf2, &buf3);
+        shake256!(k; &buf, &buf2, &buf3);
     }
 
     pub fn shared_a(
@@ -91,6 +91,6 @@ pub mod ake {
         kyber::dec(&mut buf, recv, sk);
         kyber::dec(&mut buf2, &recv[BYTES..], ska);
         buf3.copy_from_slice(&tk[..SHAREDKEYBYTES]);
-        shake128!(k; &buf, &buf2, &buf3);
+        shake256!(k; &buf, &buf2, &buf3);
     }
 }
