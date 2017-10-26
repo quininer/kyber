@@ -1,6 +1,6 @@
 use rand::Rng;
 use ::params::{
-    SHAREDKEYBYTES, BYTES,
+    SHAREDKEYBYTES, CIPHERTEXTBYTES,
     PUBLICKEYBYTES, SECRETKEYBYTES,
     INDCPA_BYTES,
     INDCPA_SECRETKEYBYTES, INDCPA_PUBLICKEYBYTES
@@ -32,12 +32,12 @@ pub fn enc(rng: &mut Rng, c: &mut [u8], k: &mut [u8; SHAREDKEYBYTES], pk: &[u8])
 
     c[INDCPA_BYTES..][..32].copy_from_slice(&krq[64..]);
 
-    shake256!(&mut krq[32..][..32]; &c[..BYTES]);
+    shake256!(&mut krq[32..][..32]; &c[..CIPHERTEXTBYTES]);
     shake256!(k; &krq[..64]);
 }
 
 pub fn dec(k: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
-    let mut cmp = [0; BYTES];
+    let mut cmp = [0; CIPHERTEXTBYTES];
     let mut buf = [0; SHAREDKEYBYTES];
     let mut buf2 = [0; 32];
     let mut krq = [0; 96];
@@ -54,7 +54,7 @@ pub fn dec(k: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
 
     let flag = utils::eq(c, &cmp);
 
-    shake256!(&mut krq[32..][..32]; &c[..BYTES]);
+    shake256!(&mut krq[32..][..32]; &c[..CIPHERTEXTBYTES]);
 
     utils::select_mov(&mut krq, &sk[SECRETKEYBYTES-SHAREDKEYBYTES..][..SHAREDKEYBYTES], flag);
 

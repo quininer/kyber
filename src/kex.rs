@@ -1,5 +1,5 @@
 use rand::Rng;
-use ::params::{ PUBLICKEYBYTES, SECRETKEYBYTES, SHAREDKEYBYTES, BYTES };
+use ::params::{ PUBLICKEYBYTES, SECRETKEYBYTES, SHAREDKEYBYTES, CIPHERTEXTBYTES };
 use ::kyber;
 
 
@@ -73,7 +73,7 @@ pub mod ake {
         let mut buf2 = [0; SHAREDKEYBYTES];
         let mut buf3 = [0; SHAREDKEYBYTES];
         kyber::enc(rng, send, &mut buf, recv);
-        kyber::enc(rng, &mut send[BYTES..], &mut buf2, pka);
+        kyber::enc(rng, &mut send[CIPHERTEXTBYTES..], &mut buf2, pka);
         kyber::dec(&mut buf3, &recv[PUBLICKEYBYTES..], skb);
         shake256!(k; &buf, &buf2, &buf3);
     }
@@ -89,7 +89,7 @@ pub mod ake {
         let mut buf2 = [0; SHAREDKEYBYTES];
         let mut buf3 = [0; SHAREDKEYBYTES];
         kyber::dec(&mut buf, recv, sk);
-        kyber::dec(&mut buf2, &recv[BYTES..], ska);
+        kyber::dec(&mut buf2, &recv[CIPHERTEXTBYTES..], ska);
         buf3.copy_from_slice(&tk[..SHAREDKEYBYTES]);
         shake256!(k; &buf, &buf2, &buf3);
     }

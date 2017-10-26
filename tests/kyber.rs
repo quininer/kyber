@@ -2,7 +2,7 @@ extern crate rand;
 extern crate kyber;
 
 use rand::OsRng;
-use kyber::params::{ BYTES, SHAREDKEYBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
+use kyber::params::{ CIPHERTEXTBYTES, SHAREDKEYBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
 
 
 #[test]
@@ -10,7 +10,7 @@ fn test_kyber() {
     let mut key_a = [0; SHAREDKEYBYTES];
     let mut key_b = [0; SHAREDKEYBYTES];
     let mut pk = [0; PUBLICKEYBYTES];
-    let mut sendb = [0; BYTES];
+    let mut sendb = [0; CIPHERTEXTBYTES];
     let mut sk_a = [0; SECRETKEYBYTES];
     let mut rng = OsRng::new().unwrap();
 

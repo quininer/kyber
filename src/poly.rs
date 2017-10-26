@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use ::params::{
-    N, Q, NOISESEEDBYTES,
-    SHAREDKEYBYTES,
+    N, Q, ETA,
+    NOISESEEDBYTES, SHAREDKEYBYTES,
     PSIS_BITREV_MONTGOMERY, OMEGAS_MONTGOMER,
     PSIS_INV_MONTGOMERY, OMEGAS_INV_BITREV_MONTGOMERY
 };
@@ -31,14 +31,14 @@ pub fn compress(poly: &Poly, buf: &mut [u8]) {
 pub fn decompress(poly: &mut Poly, buf: &[u8]) {
     let mut a = 0;
     for i in Itertools::step(0..N, 8) {
-        poly[i  ] =  (((u16::from(buf[a  ])       & 7) * Q as u16) + 4)>> 3;
+        poly[i  ] =  (((u16::from(buf[a  ])       & 7) * Q as u16) + 4) >> 3;
         poly[i+1] = ((((u16::from(buf[a  ]) >> 3) & 7) * Q as u16) + 4) >> 3;
-        poly[i+2] = ((((u16::from(buf[a  ]) >> 6) | ((u16::from(buf[a+1]) << 2) & 4)) * Q as u16) + 4)>> 3;
-        poly[i+3] = ((((u16::from(buf[a+1]) >> 1) & 7) * Q as u16) + 4)>> 3;
-        poly[i+4] = ((((u16::from(buf[a+1]) >> 4) & 7) * Q as u16) + 4)>> 3;
-        poly[i+5] = ((((u16::from(buf[a+1]) >> 7) | ((u16::from(buf[a+2]) << 1) & 6)) * Q as u16) + 4)>> 3;
-        poly[i+6] = ((((u16::from(buf[a+2]) >> 2) & 7) * Q as u16) + 4)>> 3;
-        poly[i+7] = (( (u16::from(buf[a+2]) >> 5)      * Q as u16) + 4)>> 3;
+        poly[i+2] = ((((u16::from(buf[a  ]) >> 6) | ((u16::from(buf[a+1]) << 2) & 4)) * Q as u16) + 4) >> 3;
+        poly[i+3] = ((((u16::from(buf[a+1]) >> 1) & 7) * Q as u16) + 4) >> 3;
+        poly[i+4] = ((((u16::from(buf[a+1]) >> 4) & 7) * Q as u16) + 4) >> 3;
+        poly[i+5] = ((((u16::from(buf[a+1]) >> 7) | ((u16::from(buf[a+2]) << 1) & 6)) * Q as u16) + 4) >> 3;
+        poly[i+6] = ((((u16::from(buf[a+2]) >> 2) & 7) * Q as u16) + 4) >> 3;
+        poly[i+7] = (( (u16::from(buf[a+2]) >> 5)      * Q as u16) + 4) >> 3;
         a += 3;
     }
 }
@@ -81,7 +81,7 @@ pub fn frombytes(poly: &mut Poly, buf: &[u8]) {
 }
 
 pub fn getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
-    let mut buf = [0; N];
+    let mut buf = [0; ETA * N / 4];
 
     shake256!(&mut buf; &seed[..NOISESEEDBYTES], &[nonce]);
 

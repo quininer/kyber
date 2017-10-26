@@ -6,6 +6,12 @@ description = "a CCA-secure module-lattice-based KEM"
 repository = "https://github.com/quininer/kyber"
 license = "MIT"
 
+[features]
+default = [ "kyber512" ]
+kyber512 = []
+kyber768 = []
+kyber1024 = []
+
 [dependencies]
 rand = "0.3"
 tiny-keccak = "1.3"

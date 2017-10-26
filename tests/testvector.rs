@@ -35,6 +35,7 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), DecodeError> {
     let (mut rng, mut vecs): (FixedRng, Vectors) = Default::default();
 
     for (i, line) in input.lines()
+        .take(9)
         .map(|line| HEXLOWER.decode(line.as_bytes()))
         .enumerate()
     {
@@ -55,13 +56,13 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), DecodeError> {
 
 #[test]
 fn test_testvector() {
-    use kyber::params::{ SHAREDKEYBYTES, BYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
+    use kyber::params::{ SHAREDKEYBYTES, CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
 
     let (mut rng, vecs) = parse_testvector(TEST_VECTOR).unwrap();
 
     let (mut key_a, mut key_b) = ([0; SHAREDKEYBYTES], [0; SHAREDKEYBYTES]);
     let mut pk = [0; PUBLICKEYBYTES];
-    let mut sendb = [0; BYTES];
+    let mut sendb = [0; CIPHERTEXTBYTES];
     let mut sk_a = [0; SECRETKEYBYTES];
 
     kyber::kyber::keypair(&mut rng, &mut pk, &mut sk_a);

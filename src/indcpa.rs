@@ -92,6 +92,10 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
     rng.fill_bytes(&mut seed);
     rng.fill_bytes(&mut noiseseed);
     shake256!(&mut seed; &seed);
+    for b in &seed {
+        eprint!("{:x}", b);
+    }
+    eprintln!();
 
     gen_matrix(&mut a, &seed, false);
 
