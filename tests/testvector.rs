@@ -1,9 +1,9 @@
 extern crate rand;
-extern crate data_encoding;
+extern crate rustc_hex;
 extern crate kyber;
 
 use rand::Rng;
-use data_encoding::{ HEXLOWER, DecodeError };
+use rustc_hex::{ FromHex, FromHexError };
 
 const TEST_VECTOR: &str = include_str!("testvector.txt");
 
@@ -31,21 +31,22 @@ struct Vectors {
     pub key_a: Vec<u8>
 }
 
-fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), DecodeError> {
+fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), FromHexError> {
     let (mut rng, mut vecs): (FixedRng, Vectors) = Default::default();
 
     for (i, line) in input.lines()
         .take(9)
-        .map(|line| HEXLOWER.decode(line.as_bytes()))
+        .map(|line| line.from_hex())
         .enumerate()
     {
+        let mut line = line?;
         match i {
-            0...2 | 5 => rng.0.append(&mut line?),
-            3 => vecs.pk.append(&mut line?),
-            4 => vecs.sk_a.append(&mut line?),
-            6 => vecs.sendb.append(&mut line?),
-            7 => vecs.key_b.append(&mut line?),
-            8 => vecs.key_a.append(&mut line?),
+            0...2 | 5 => rng.0.append(&mut line),
+            3 => vecs.pk.append(&mut line),
+            4 => vecs.sk_a.append(&mut line),
+            6 => vecs.sendb.append(&mut line),
+            7 => vecs.key_b.append(&mut line),
+            8 => vecs.key_a.append(&mut line),
             _ => unreachable!()
         }
     }

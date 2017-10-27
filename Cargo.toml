@@ -19,4 +19,4 @@ byteorder = "1.1"
 itertools = "0.7"
 
 [dev-dependencies]
-data-encoding = "2.0.0-rc"
+rustc-hex = "1.0"
