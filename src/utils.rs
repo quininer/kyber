@@ -1,10 +1,10 @@
 macro_rules! shake256 {
     ( $output:expr ; $( $input:expr ),* ) => {
-        let mut shake = ::tiny_keccak::Keccak::new_shake256();
+        let mut shake = ::sha3::Shake256::default();
         $(
-            shake.update($input);
+            ::digest::Input::process(&mut shake, $input);
         )*
-        shake.finalize($output);
+        let _ = ::digest::VariableOutput::variable_result(shake, $output);
     }
 }
 

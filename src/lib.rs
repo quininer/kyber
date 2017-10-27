@@ -1,7 +1,8 @@
 extern crate rand;
 extern crate byteorder;
 extern crate itertools;
-extern crate tiny_keccak;
+extern crate sha3;
+extern crate digest;
 
 #[macro_use] mod utils;
 mod reduce;

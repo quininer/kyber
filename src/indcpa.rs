@@ -1,6 +1,5 @@
 use rand::Rng;
 use byteorder::{ ByteOrder, LittleEndian };
-use tiny_keccak::Keccak;
 use ::ntt::bitrev_vector;
 use ::poly::{ self, Poly };
 use ::polyvec::{ self, PolyVec };
@@ -47,20 +46,22 @@ pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8]) {
 }
 
 pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
+    use sha3::Shake128;
+    use digest::{ Input, ExtendableOutput, XofReader };
+
     const SHAKE128_RATE: usize = 168;
 
     for i in 0..K {
         for j in 0..K {
-            let mut shake = Keccak::new_shake128();
+            let mut shake = Shake128::default();
             let (mut nblocks, mut pos, mut ctr) = (4, 0, 0);
             let mut buf = [0; SHAKE128_RATE * 4];
             let sep = if transposed { [i as u8, j as u8] } else { [j as u8, i as u8] };
 
-            shake.update(seed);
-            shake.update(&sep);
-            shake.pad();
-            shake.keccakf();
-            shake.squeeze(&mut buf);
+            shake.process(seed);
+            shake.process(&sep);
+            let mut xof = shake.xof_result();
+            xof.read(&mut buf);
 
             while ctr < N {
                 let val = LittleEndian::read_u16(&buf[pos..]) & 0x1fff;
@@ -72,7 +73,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
 
                 if pos > SHAKE128_RATE * nblocks - 2 {
                     nblocks = 1;
-                    shake.squeeze(&mut buf);
+                    xof.read(&mut buf);
                     pos = 0;
                 }
             }
