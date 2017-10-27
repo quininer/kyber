@@ -11,5 +11,5 @@ mod ntt;
 mod cbd;
 mod indcpa;
 pub mod params;
-pub mod kyber;
+pub mod kem;
 pub mod kex;

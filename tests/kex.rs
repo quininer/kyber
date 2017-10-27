@@ -16,7 +16,7 @@ fn test_kex_uake() {
     let mut ka = [0; SHAREDKEYBYTES];
     let mut kb = [0; SHAREDKEYBYTES];
 
-    kyber::kyber::keypair(&mut rng, &mut pkb, &mut skb);
+    kyber::kem::keypair(&mut rng, &mut pkb, &mut skb);
     kyber::kex::uake::init_a(&mut rng, &mut senda, &mut tk, &mut ska, &pkb);
     kyber::kex::uake::shared_b(&mut rng, &mut sendb, &mut kb, &senda, &skb);
     kyber::kex::uake::shared_a(&mut ka, &sendb, &tk, &ska);
@@ -38,8 +38,8 @@ fn test_kex_ake() {
     let mut ka = [0; SHAREDKEYBYTES];
     let mut kb = [0; SHAREDKEYBYTES];
 
-    kyber::kyber::keypair(&mut rng, &mut pkb, &mut skb);
-    kyber::kyber::keypair(&mut rng, &mut pka, &mut ska);
+    kyber::kem::keypair(&mut rng, &mut pkb, &mut skb);
+    kyber::kem::keypair(&mut rng, &mut pka, &mut ska);
     kyber::kex::ake::init_a(&mut rng, &mut senda, &mut tk, &mut eska, &pkb);
     kyber::kex::ake::shared_b(&mut rng, &mut sendb, &mut kb, &senda, &skb, &pka);
     kyber::kex::ake::shared_a(&mut ka, &sendb, &tk, &eska, &ska);

@@ -1,6 +1,6 @@
 use rand::Rng;
 use ::params::{ PUBLICKEYBYTES, SECRETKEYBYTES, SHAREDKEYBYTES, CIPHERTEXTBYTES };
-use ::kyber;
+use ::kem;
 
 
 pub mod uake {
@@ -14,8 +14,8 @@ pub mod uake {
         sk: &mut [u8; SECRETKEYBYTES],
         pkb: &[u8; PUBLICKEYBYTES]
     ) {
-        kyber::keypair(rng, send, sk);
-        kyber::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
+        kem::keypair(rng, send, sk);
+        kem::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
     }
 
     pub fn shared_b(
@@ -27,8 +27,8 @@ pub mod uake {
     ) {
         let mut buf = [0; SHAREDKEYBYTES];
         let mut buf2 = [0; SHAREDKEYBYTES];
-        kyber::enc(rng, send, &mut buf, recv);
-        kyber::dec(&mut buf2, &recv[PUBLICKEYBYTES..], skb);
+        kem::enc(rng, send, &mut buf, recv);
+        kem::dec(&mut buf2, &recv[PUBLICKEYBYTES..], skb);
         shake256!(k; &buf, &buf2);
     }
 
@@ -39,10 +39,8 @@ pub mod uake {
         sk: &[u8; SECRETKEYBYTES]
     ) {
         let mut buf = [0; SHAREDKEYBYTES];
-        let mut buf2 = [0; SHAREDKEYBYTES];
-        kyber::dec(&mut buf, recv, sk);
-        buf2.copy_from_slice(&tk[..SHAREDKEYBYTES]);
-        shake256!(k; &buf, &buf2);
+        kem::dec(&mut buf, recv, sk);
+        shake256!(k; &buf, &tk[..SHAREDKEYBYTES]);
     }
 }
 
@@ -57,8 +55,8 @@ pub mod ake {
         sk: &mut [u8; SECRETKEYBYTES],
         pkb: &[u8; PUBLICKEYBYTES]
     ) {
-        kyber::keypair(rng, send, sk);
-        kyber::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
+        kem::keypair(rng, send, sk);
+        kem::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
     }
 
     pub fn shared_b(
@@ -72,9 +70,9 @@ pub mod ake {
         let mut buf = [0; SHAREDKEYBYTES];
         let mut buf2 = [0; SHAREDKEYBYTES];
         let mut buf3 = [0; SHAREDKEYBYTES];
-        kyber::enc(rng, send, &mut buf, recv);
-        kyber::enc(rng, &mut send[CIPHERTEXTBYTES..], &mut buf2, pka);
-        kyber::dec(&mut buf3, &recv[PUBLICKEYBYTES..], skb);
+        kem::enc(rng, send, &mut buf, recv);
+        kem::enc(rng, &mut send[CIPHERTEXTBYTES..], &mut buf2, pka);
+        kem::dec(&mut buf3, &recv[PUBLICKEYBYTES..], skb);
         shake256!(k; &buf, &buf2, &buf3);
     }
 
@@ -87,10 +85,8 @@ pub mod ake {
     ) {
         let mut buf = [0; SHAREDKEYBYTES];
         let mut buf2 = [0; SHAREDKEYBYTES];
-        let mut buf3 = [0; SHAREDKEYBYTES];
-        kyber::dec(&mut buf, recv, sk);
-        kyber::dec(&mut buf2, &recv[CIPHERTEXTBYTES..], ska);
-        buf3.copy_from_slice(&tk[..SHAREDKEYBYTES]);
-        shake256!(k; &buf, &buf2, &buf3);
+        kem::dec(&mut buf, recv, sk);
+        kem::dec(&mut buf2, &recv[CIPHERTEXTBYTES..], ska);
+        shake256!(k; &buf, &buf2, &tk[..SHAREDKEYBYTES]);
     }
 }

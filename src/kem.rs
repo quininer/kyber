@@ -36,20 +36,16 @@ pub fn enc(rng: &mut Rng, c: &mut [u8], k: &mut [u8; SHAREDKEYBYTES], pk: &[u8])
     shake256!(k; &krq[..64]);
 }
 
-pub fn dec(k: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
+pub fn dec(k: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) -> bool {
     let mut cmp = [0; CIPHERTEXTBYTES];
     let mut buf = [0; SHAREDKEYBYTES];
-    let mut buf2 = [0; 32];
     let mut krq = [0; 96];
     let pk = &sk[INDCPA_SECRETKEYBYTES..][..INDCPA_PUBLICKEYBYTES];
 
     indcpa::dec(&mut buf, c, sk);
-
-    buf2.copy_from_slice(&sk[SECRETKEYBYTES-64..][..32]);
-    shake256!(&mut krq; &buf, &buf2);
+    shake256!(&mut krq; &buf, &sk[SECRETKEYBYTES-64..][..32]);
 
     indcpa::enc(&mut cmp, &buf, pk, &krq[32..]);
-
     cmp[INDCPA_BYTES..][..32].copy_from_slice(&krq[64..]);
 
     let flag = utils::eq(c, &cmp);
@@ -59,4 +55,6 @@ pub fn dec(k: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
     utils::select_mov(&mut krq, &sk[SECRETKEYBYTES-SHAREDKEYBYTES..][..SHAREDKEYBYTES], flag);
 
     shake256!(k; &krq[..64]);
+
+    flag
 }

@@ -65,17 +65,17 @@ fn test_testvector() {
     let mut sendb = [0; CIPHERTEXTBYTES];
     let mut sk_a = [0; SECRETKEYBYTES];
 
-    kyber::kyber::keypair(&mut rng, &mut pk, &mut sk_a);
+    kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);
 
     assert_eq!(vecs.pk, &pk[..]);
     assert_eq!(vecs.sk_a, &sk_a[..]);
 
-    kyber::kyber::enc(&mut rng, &mut sendb, &mut key_b, &pk);
+    kyber::kem::enc(&mut rng, &mut sendb, &mut key_b, &pk);
 
     assert_eq!(vecs.sendb, &sendb[..]);
     assert_eq!(vecs.key_b, &key_b[..]);
 
-    kyber::kyber::dec(&mut key_a, &sendb, &sk_a);
+    kyber::kem::dec(&mut key_a, &sendb, &sk_a);
 
     assert_eq!(vecs.key_a, &key_a[..]);
 }
