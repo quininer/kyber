@@ -9,13 +9,12 @@ matrix:
     - env: TARGET=powerpc-unknown-linux-gnu
 
 install:
-  - curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git japaric/cross
+  - curl -LSfs https://japaric.github.io/trust/install.sh | sh -s -- --git japaric/cross --force
   - source ~/.cargo/env || true
 
 script:
   - cross test --target $TARGET
+  - cross test --target $TARGET --no-default-features --features kyber768
+  - cross test --target $TARGET --no-default-features --features kyber1024
 
 cache: cargo
-before_cache:
-  # Travis can't cache files that are not readable by "others"
-  - chmod -R a+r $HOME/.cargo

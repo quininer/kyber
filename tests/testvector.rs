@@ -5,7 +5,14 @@ extern crate kyber;
 use rand::Rng;
 use rustc_hex::{ FromHex, FromHexError };
 
-const TEST_VECTOR: &str = include_str!("testvector.txt");
+#[cfg(feature = "kyber512")]
+const TEST_VECTOR: &str = include_str!("testvectork2.txt");
+
+#[cfg(feature = "kyber768")]
+const TEST_VECTOR: &str = include_str!("testvectork3.txt");
+
+#[cfg(feature = "kyber1024")]
+const TEST_VECTOR: &str = include_str!("testvectork4.txt");
 
 
 #[derive(Default)]
