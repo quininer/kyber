@@ -10,7 +10,7 @@ macro_rules! shake256 {
 
 
 pub fn eq(a: &[u8], b: &[u8]) -> bool {
-    use std::ops::BitOr;
+    use core::ops::BitOr;
 
     a.iter().zip(b)
         .map(|(&x, &y)| x ^ y)
@@ -19,7 +19,7 @@ pub fn eq(a: &[u8], b: &[u8]) -> bool {
 }
 
 pub fn select_mov(r: &mut [u8], x: &[u8], flag: bool) {
-    let flag = ::std::u8::MIN.wrapping_sub(!flag as u8);
+    let flag = ::core::u8::MIN.wrapping_sub(!flag as u8);
     for (r, &x) in r.iter_mut().zip(x) {
         *r ^= flag & (x ^ *r);
     }

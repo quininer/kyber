@@ -1,3 +1,4 @@
+extern crate core;
 extern crate rand;
 extern crate byteorder;
 extern crate itertools;

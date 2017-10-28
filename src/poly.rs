@@ -119,7 +119,7 @@ pub fn sub(r: &mut Poly, b: &Poly) {
 pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
     for (i, b) in msg.iter().enumerate() {
         for j in 0..8 {
-            let mask = ::std::u16::MIN.wrapping_sub(u16::from(b >> j) & 1);
+            let mask = ::core::u16::MIN.wrapping_sub(u16::from(b >> j) & 1);
             r[8 * i + j] = mask & ((Q as u16 + 1) / 2);
         }
     }
