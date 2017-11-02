@@ -14,7 +14,7 @@ install:
 
 script:
   - cross test --target $TARGET
-  - cross test --target $TARGET --no-default-features --features kyber768
+  - cross test --target $TARGET --no-default-features --features kyber512
   - cross test --target $TARGET --no-default-features --features kyber1024
 
 cache: cargo

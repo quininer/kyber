@@ -7,7 +7,7 @@ repository = "https://github.com/quininer/kyber"
 license = "MIT"
 
 [features]
-default = [ "kyber512" ]
+default = [ "kyber768" ]
 kyber512 = []
 kyber768 = []
 kyber1024 = []
