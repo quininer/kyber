@@ -1,11 +1,11 @@
 use ::poly::{ self, Poly };
-use ::params::{ N, K, Q, POLYBYTES };
+use ::params::{ N, K, Q, POLYBYTES, POLYVECBYTES, POLYVECCOMPRESSEDBYTES };
 use ::reduce::{ freeze, montgomery_reduce, barrett_reduce };
 
 
 pub type PolyVec = [Poly; K];
 
-pub fn compress(a: &PolyVec, r: &mut [u8]) {
+pub fn compress(a: &PolyVec, r: &mut [u8; POLYVECCOMPRESSEDBYTES]) {
     let mut p = 0;
     let mut t = [0; 8];
     for poly in a {
@@ -31,7 +31,7 @@ pub fn compress(a: &PolyVec, r: &mut [u8]) {
 }
 
 
-pub fn decompress(r: &mut PolyVec, a: &[u8]) {
+pub fn decompress(r: &mut PolyVec, a: &[u8; POLYVECCOMPRESSEDBYTES]) {
     let mut p = 0;
     for poly in r {
         for i in 0..(N / 8) {
@@ -49,16 +49,16 @@ pub fn decompress(r: &mut PolyVec, a: &[u8]) {
 }
 
 #[inline]
-pub fn tobytes(a: &PolyVec, r: &mut [u8]) {
+pub fn tobytes(a: &PolyVec, r: &mut [u8; POLYVECBYTES]) {
     for (i, poly) in a.iter().enumerate() {
-        poly::tobytes(poly, &mut r[i * POLYBYTES..][..POLYBYTES]);
+        poly::tobytes(poly, array_mut_ref!(r, i * POLYBYTES, POLYBYTES));
     }
 }
 
 #[inline]
-pub fn frombytes(r: &mut PolyVec, a: &[u8]) {
+pub fn frombytes(r: &mut PolyVec, a: &[u8; POLYVECBYTES]) {
     for (i ,poly) in r.iter_mut().enumerate() {
-        poly::frombytes(poly, &a[i * POLYBYTES..][..POLYBYTES])
+        poly::frombytes(poly, array_ref!(a, i * POLYBYTES, POLYBYTES))
     }
 }
 

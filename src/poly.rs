@@ -3,7 +3,8 @@ use ::params::{
     N, Q, ETA,
     NOISESEEDBYTES, SHAREDKEYBYTES,
     PSIS_BITREV_MONTGOMERY, OMEGAS_MONTGOMER,
-    PSIS_INV_MONTGOMERY, OMEGAS_INV_BITREV_MONTGOMERY
+    PSIS_INV_MONTGOMERY, OMEGAS_INV_BITREV_MONTGOMERY,
+    POLYBYTES, POLYCOMPRESSEDBYTES
 };
 use ::reduce::{ barrett_reduce, freeze };
 use ::cbd::cbd;
@@ -12,7 +13,7 @@ use ::ntt::{ bitrev_vector, mul_coefficients, ntt as fft };
 
 pub type Poly = [u16; N];
 
-pub fn compress(poly: &Poly, buf: &mut [u8]) {
+pub fn compress(poly: &Poly, buf: &mut [u8; POLYCOMPRESSEDBYTES]) {
     let mut t = [0; 8];
     let mut k = 0;
 
@@ -28,7 +29,7 @@ pub fn compress(poly: &Poly, buf: &mut [u8]) {
     }
 }
 
-pub fn decompress(poly: &mut Poly, buf: &[u8]) {
+pub fn decompress(poly: &mut Poly, buf: &[u8; POLYCOMPRESSEDBYTES]) {
     let mut a = 0;
     for i in Itertools::step(0..N, 8) {
         poly[i  ] =  (((u16::from(buf[a  ])       & 7) * Q as u16) + 4) >> 3;
@@ -44,7 +45,7 @@ pub fn decompress(poly: &mut Poly, buf: &[u8]) {
 }
 
 
-pub fn tobytes(poly: &Poly, buf: &mut [u8]) {
+pub fn tobytes(poly: &Poly, buf: &mut [u8; POLYBYTES]) {
     let mut t = [0; 8];
     for i in 0..(N / 8) {
         for j in 0..8 {
@@ -67,7 +68,7 @@ pub fn tobytes(poly: &Poly, buf: &mut [u8]) {
     }
 }
 
-pub fn frombytes(poly: &mut Poly, buf: &[u8]) {
+pub fn frombytes(poly: &mut Poly, buf: &[u8; POLYBYTES]) {
     for i in 0..(N / 8) {
         poly[8*i  ] =  u16::from(buf[13*i   ])       | ((u16::from(buf[13*i+ 1]) & 0x1f) << 8);
         poly[8*i+1] = (u16::from(buf[13*i+ 1]) >> 5) | ((u16::from(buf[13*i+ 2])       ) << 3) | ((u16::from(buf[13*i+ 3]) & 0x03) << 11);
@@ -80,7 +81,7 @@ pub fn frombytes(poly: &mut Poly, buf: &[u8]) {
     }
 }
 
-pub fn getnoise(poly: &mut Poly, seed: &[u8], nonce: u8) {
+pub fn getnoise(poly: &mut Poly, seed: &[u8; NOISESEEDBYTES], nonce: u8) {
     let mut buf = [0; ETA * N / 4];
 
     shake256!(&mut buf; &seed[..NOISESEEDBYTES], &[nonce]);

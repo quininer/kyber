@@ -5,47 +5,47 @@ use ::poly::{ self, Poly };
 use ::polyvec::{ self, PolyVec };
 use ::params::{
     N, K, Q,
-    SHAREDKEYBYTES,
-    POLYVECCOMPRESSEDBYTES,
+    INDCPA_PUBLICKEYBYTES, INDCPA_SECRETKEYBYTES, INDCPA_BYTES, INDCPA_MSGBYTES,
+    POLYVECBYTES, POLYCOMPRESSEDBYTES, POLYVECCOMPRESSEDBYTES,
     SEEDBYTES, COINBYTES
 };
 
 
 #[inline]
-pub fn pack_sk(r: &mut [u8], sk: &PolyVec) {
+pub fn pack_sk(r: &mut [u8; INDCPA_SECRETKEYBYTES], sk: &PolyVec) {
     polyvec::tobytes(sk, r);
 }
 
 #[inline]
-pub fn unpack_sk(sk: &mut PolyVec, a: &[u8]) {
+pub fn unpack_sk(sk: &mut PolyVec, a: &[u8; INDCPA_SECRETKEYBYTES]) {
     polyvec::frombytes(sk, a);
 }
 
 #[inline]
-pub fn pack_pk(r: &mut [u8], pk: &PolyVec, seed: &[u8]) {
-    polyvec::compress(pk, r);
-    r[POLYVECCOMPRESSEDBYTES..][..SEEDBYTES].copy_from_slice(seed);
+pub fn pack_pk(r: &mut [u8; INDCPA_PUBLICKEYBYTES], pk: &PolyVec, seed: &[u8; SEEDBYTES]) {
+    polyvec::compress(pk, array_mut_ref!(r, 0, POLYVECCOMPRESSEDBYTES));
+    array_mut_ref!(r, POLYVECCOMPRESSEDBYTES, SEEDBYTES).clone_from(seed);
 }
 
 #[inline]
-pub fn unpack_pk(pk: &mut PolyVec, seed: &mut [u8], packedpk: &[u8]) {
-    polyvec::decompress(pk, packedpk);
-    seed[..SEEDBYTES].copy_from_slice(&packedpk[POLYVECCOMPRESSEDBYTES..][..SEEDBYTES]);
+pub fn unpack_pk(pk: &mut PolyVec, seed: &mut [u8; SEEDBYTES], packedpk: &[u8; INDCPA_PUBLICKEYBYTES]) {
+    polyvec::decompress(pk, array_ref!(packedpk, 0, POLYVECCOMPRESSEDBYTES));
+    seed.clone_from(array_ref!(packedpk, POLYVECCOMPRESSEDBYTES, SEEDBYTES));
 }
 
 #[inline]
-pub fn pack_ciphertext(r: &mut [u8], b: &PolyVec, v: &Poly) {
-    polyvec::compress(b, r);
-    poly::compress(v, &mut r[POLYVECCOMPRESSEDBYTES..]);
+pub fn pack_ciphertext(r: &mut [u8; INDCPA_BYTES], b: &PolyVec, v: &Poly) {
+    polyvec::compress(b, array_mut_ref!(r, 0, POLYVECCOMPRESSEDBYTES));
+    poly::compress(v, array_mut_ref!(r, POLYVECCOMPRESSEDBYTES, POLYCOMPRESSEDBYTES));
 }
 
 #[inline]
-pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8]) {
-    polyvec::decompress(b, &r[..POLYVECCOMPRESSEDBYTES]);
-    poly::decompress(v, &r[POLYVECCOMPRESSEDBYTES..]);
+pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8; INDCPA_BYTES]) {
+    polyvec::decompress(b, array_ref!(r, 0, POLYVECCOMPRESSEDBYTES));
+    poly::decompress(v, array_ref!(r, POLYVECCOMPRESSEDBYTES, POLYCOMPRESSEDBYTES));
 }
 
-pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
+pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SEEDBYTES], transposed: bool) {
     use sha3::Shake128;
     use digest::{ Input, ExtendableOutput, XofReader };
 
@@ -81,7 +81,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8], transposed: bool) {
     }
 }
 
-pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
+pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8; INDCPA_SECRETKEYBYTES]) {
     let mut seed = [0; SEEDBYTES];
     let mut noiseseed = [0; COINBYTES];
     let mut a = [[[0; N]; K]; K];
@@ -118,7 +118,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8], sk: &mut [u8]) {
     pack_pk(pk, &pkpv, &seed);
 }
 
-pub fn enc(c: &mut [u8], m: &[u8; SHAREDKEYBYTES], pk: &[u8], coins: &[u8]) {
+pub fn enc(c: &mut [u8; INDCPA_BYTES], m: &[u8; INDCPA_MSGBYTES], pk: &[u8; INDCPA_PUBLICKEYBYTES], coins: &[u8; COINBYTES]) {
     let (mut k, mut v, mut epp) = ([0; N], [0; N], [0; N]);
     let (mut sp, mut ep, mut bp) = ([[0; N]; K], [[0; N]; K], [[0; N]; K]);
     let mut pkpv = [[0; N]; K];
@@ -164,7 +164,7 @@ pub fn enc(c: &mut [u8], m: &[u8; SHAREDKEYBYTES], pk: &[u8], coins: &[u8]) {
     pack_ciphertext(c, &bp, &v);
 }
 
-pub fn dec(m: &mut [u8; SHAREDKEYBYTES], c: &[u8], sk: &[u8]) {
+pub fn dec(m: &mut [u8; INDCPA_MSGBYTES], c: &[u8; INDCPA_BYTES], sk: &[u8; POLYVECBYTES]) {
     let (mut bp, mut skpv) = ([[0; N]; K], [[0; N]; K]);
     let (mut v, mut mp) = ([0; N], [0; N]);
 

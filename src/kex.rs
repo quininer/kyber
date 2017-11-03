@@ -1,5 +1,7 @@
 use rand::Rng;
-use ::params::{ PUBLICKEYBYTES, SECRETKEYBYTES, SHAREDKEYBYTES, CIPHERTEXTBYTES };
+use ::params::{
+    PUBLICKEYBYTES, SECRETKEYBYTES, SHAREDKEYBYTES, CIPHERTEXTBYTES,
+};
 use ::kem;
 
 
@@ -14,8 +16,8 @@ pub mod uake {
         sk: &mut [u8; SECRETKEYBYTES],
         pkb: &[u8; PUBLICKEYBYTES]
     ) {
-        kem::keypair(rng, send, sk);
-        kem::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
+        kem::keypair(rng, array_mut_ref!(send, 0, PUBLICKEYBYTES), sk);
+        kem::enc(rng, array_mut_ref!(send, PUBLICKEYBYTES, CIPHERTEXTBYTES), tk, pkb);
     }
 
     pub fn shared_b(
@@ -27,8 +29,8 @@ pub mod uake {
     ) {
         let mut buf = [0; SHAREDKEYBYTES];
         let mut buf2 = [0; SHAREDKEYBYTES];
-        kem::enc(rng, send, &mut buf, recv);
-        kem::dec(&mut buf2, &recv[PUBLICKEYBYTES..], skb);
+        kem::enc(rng, send, &mut buf, array_ref!(recv, 0, PUBLICKEYBYTES));
+        kem::dec(&mut buf2, array_ref!(recv, PUBLICKEYBYTES, CIPHERTEXTBYTES), skb);
         shake256!(k; &buf, &buf2);
     }
 
@@ -55,8 +57,8 @@ pub mod ake {
         sk: &mut [u8; SECRETKEYBYTES],
         pkb: &[u8; PUBLICKEYBYTES]
     ) {
-        kem::keypair(rng, send, sk);
-        kem::enc(rng, &mut send[PUBLICKEYBYTES..], tk, pkb);
+        kem::keypair(rng, array_mut_ref!(send, 0, PUBLICKEYBYTES), sk);
+        kem::enc(rng, array_mut_ref!(send, PUBLICKEYBYTES, CIPHERTEXTBYTES), tk, pkb);
     }
 
     pub fn shared_b(
@@ -70,9 +72,9 @@ pub mod ake {
         let mut buf = [0; SHAREDKEYBYTES];
         let mut buf2 = [0; SHAREDKEYBYTES];
         let mut buf3 = [0; SHAREDKEYBYTES];
-        kem::enc(rng, send, &mut buf, recv);
-        kem::enc(rng, &mut send[CIPHERTEXTBYTES..], &mut buf2, pka);
-        kem::dec(&mut buf3, &recv[PUBLICKEYBYTES..], skb);
+        kem::enc(rng, array_mut_ref!(send, 0, CIPHERTEXTBYTES), &mut buf, array_ref!(recv, 0, PUBLICKEYBYTES));
+        kem::enc(rng, array_mut_ref!(send, CIPHERTEXTBYTES, CIPHERTEXTBYTES), &mut buf2, pka);
+        kem::dec(&mut buf3, array_ref!(recv, PUBLICKEYBYTES, CIPHERTEXTBYTES), skb);
         shake256!(k; &buf, &buf2, &buf3);
     }
 
@@ -85,8 +87,8 @@ pub mod ake {
     ) {
         let mut buf = [0; SHAREDKEYBYTES];
         let mut buf2 = [0; SHAREDKEYBYTES];
-        kem::dec(&mut buf, recv, sk);
-        kem::dec(&mut buf2, &recv[CIPHERTEXTBYTES..], ska);
+        kem::dec(&mut buf, array_ref!(recv, 0, CIPHERTEXTBYTES), sk);
+        kem::dec(&mut buf2, array_ref!(recv, CIPHERTEXTBYTES, CIPHERTEXTBYTES), ska);
         shake256!(k; &buf, &buf2, &tk[..SHAREDKEYBYTES]);
     }
 }

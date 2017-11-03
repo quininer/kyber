@@ -11,7 +11,7 @@ pub const Q: usize = 7681;
 
 pub const SEEDBYTES     : usize = 32;
 pub const NOISESEEDBYTES: usize = 32;
-pub const COINBYTES     : usize = 32;
+pub const COINBYTES     : usize = NOISESEEDBYTES;
 pub const SHAREDKEYBYTES: usize = 32;
 
 pub const POLYBYTES             : usize = 416;
@@ -19,7 +19,7 @@ pub const POLYCOMPRESSEDBYTES   : usize = 96;
 pub const POLYVECBYTES          : usize = K * POLYBYTES;
 pub const POLYVECCOMPRESSEDBYTES: usize = K * 352;
 
-pub const INDCPA_MSGBYTES      : usize = 32;
+pub const INDCPA_MSGBYTES      : usize = SHAREDKEYBYTES;
 pub const INDCPA_PUBLICKEYBYTES: usize = POLYVECCOMPRESSEDBYTES + SEEDBYTES;
 pub const INDCPA_SECRETKEYBYTES: usize = POLYVECBYTES;
 pub const INDCPA_BYTES         : usize = POLYVECCOMPRESSEDBYTES + POLYCOMPRESSEDBYTES;

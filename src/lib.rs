@@ -1,4 +1,6 @@
 extern crate core;
+
+#[macro_use] extern crate arrayref;
 extern crate rand;
 extern crate byteorder;
 extern crate itertools;
