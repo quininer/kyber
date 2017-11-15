@@ -4,7 +4,8 @@ macro_rules! shake256 {
         $(
             ::digest::Input::process(&mut shake, $input);
         )*
-        let _ = ::digest::VariableOutput::variable_result(shake, $output);
+        let mut reader = ::digest::ExtendableOutput::xof_result(shake);
+        ::digest::XofReader::read(&mut reader, $output);
     }
 }
 
