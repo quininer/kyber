@@ -1,6 +1,5 @@
 use rand::Rng;
 use byteorder::{ ByteOrder, LittleEndian };
-use ::ntt::bitrev_vector;
 use ::poly::{ self, Poly };
 use ::polyvec::{ self, PolyVec };
 use ::params::{
@@ -82,8 +81,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SEEDBYTES], transposed: bool) {
 }
 
 pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8; INDCPA_SECRETKEYBYTES]) {
-    let mut seed = [0; SEEDBYTES];
-    let mut noiseseed = [0; COINBYTES];
+    let mut seed = [0; SEEDBYTES + COINBYTES];
     let mut a = [[[0; N]; K]; K];
     let mut e = [[0; N]; K];
     let mut pkpv = [[0; N]; K];
@@ -91,20 +89,22 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8
     let mut nonce = 0;
 
     rng.fill_bytes(&mut seed);
-    rng.fill_bytes(&mut noiseseed);
-    shake256!(&mut seed; &seed);
+    shake256!(&mut seed; &seed[..SEEDBYTES]);
 
-    gen_matrix(&mut a, &seed, false);
+    let publicseed = array_ref!(seed, 0, SEEDBYTES);
+    let noiseseed = array_ref!(seed, SEEDBYTES, COINBYTES);
+
+    gen_matrix(&mut a, publicseed, false);
 
     for poly in &mut skpv {
-        poly::getnoise(poly, &noiseseed, nonce);
+        poly::getnoise(poly, noiseseed, nonce);
         nonce += 1;
     }
 
     polyvec::ntt(&mut skpv);
 
     for poly in &mut e {
-        poly::getnoise(poly, &noiseseed, nonce);
+        poly::getnoise(poly, noiseseed, nonce);
         nonce += 1;
     }
 
@@ -115,7 +115,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8
     polyvec::add(&mut pkpv, &e);
 
     pack_sk(sk, &skpv);
-    pack_pk(pk, &pkpv, &seed);
+    pack_pk(pk, &pkpv, publicseed);
 }
 
 pub fn enc(c: &mut [u8; INDCPA_BYTES], m: &[u8; INDCPA_MSGBYTES], pk: &[u8; INDCPA_PUBLICKEYBYTES], coins: &[u8; COINBYTES]) {
@@ -129,9 +129,6 @@ pub fn enc(c: &mut [u8; INDCPA_BYTES], m: &[u8; INDCPA_MSGBYTES], pk: &[u8; INDC
     unpack_pk(&mut pkpv, &mut seed, pk);
     poly::frommsg(&mut k, m);
 
-    for poly in &mut pkpv {
-        bitrev_vector(poly);
-    }
     polyvec::ntt(&mut pkpv);
 
     gen_matrix(&mut at, &seed, true);
@@ -171,9 +168,6 @@ pub fn dec(m: &mut [u8; INDCPA_MSGBYTES], c: &[u8; INDCPA_BYTES], sk: &[u8; POLY
     unpack_ciphertext(&mut bp, &mut v, c);
     unpack_sk(&mut skpv, sk);
 
-    for poly in &mut bp {
-        bitrev_vector(poly);
-    }
     polyvec::ntt(&mut bp);
 
     polyvec::pointwise_acc(&mut mp, &skpv, &bp);

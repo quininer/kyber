@@ -91,13 +91,14 @@ pub fn getnoise(poly: &mut Poly, seed: &[u8; NOISESEEDBYTES], nonce: u8) {
 
 #[inline]
 pub fn ntt(poly: &mut Poly) {
+    bitrev_vector(poly);
     mul_coefficients(poly, &PSIS_BITREV_MONTGOMERY);
     fft(poly, &OMEGAS_MONTGOMER);
+    bitrev_vector(poly);
 }
 
 #[inline]
 pub fn invntt(poly: &mut Poly) {
-    bitrev_vector(poly);
     fft(poly, &OMEGAS_INV_BITREV_MONTGOMERY);
     mul_coefficients(poly, &PSIS_INV_MONTGOMERY);
 }
