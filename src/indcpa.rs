@@ -88,7 +88,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8
     let mut skpv = [[0; N]; K];
     let mut nonce = 0;
 
-    rng.fill_bytes(&mut seed);
+    rng.fill_bytes(&mut seed[..SEEDBYTES]);
     shake256!(&mut seed; &seed[..SEEDBYTES]);
 
     let publicseed = array_ref!(seed, 0, SEEDBYTES);

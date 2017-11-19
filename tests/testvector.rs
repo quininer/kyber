@@ -42,18 +42,18 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), FromHexError> {
     let (mut rng, mut vecs): (FixedRng, Vectors) = Default::default();
 
     for (i, line) in input.lines()
-        .take(9)
+        .take(8)
         .map(|line| line.from_hex())
         .enumerate()
     {
         let mut line = line?;
         match i {
-            0...2 | 5 => rng.0.append(&mut line),
-            3 => vecs.pk.append(&mut line),
-            4 => vecs.sk_a.append(&mut line),
-            6 => vecs.sendb.append(&mut line),
-            7 => vecs.key_b.append(&mut line),
-            8 => vecs.key_a.append(&mut line),
+            0...1 | 4 => rng.0.append(&mut line),
+            2 => vecs.pk.append(&mut line),
+            3 => vecs.sk_a.append(&mut line),
+            5 => vecs.sendb.append(&mut line),
+            6 => vecs.key_b.append(&mut line),
+            7 => vecs.key_a.append(&mut line),
             _ => unreachable!()
         }
     }
@@ -76,6 +76,8 @@ fn test_testvector() {
     kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);
 
     assert_eq!(vecs.pk, &pk[..]);
+    assert_eq!(&vecs.sk_a[..SECRETKEYBYTES-32], &sk_a[..SECRETKEYBYTES-32]);
+    assert_eq!(&vecs.sk_a[SECRETKEYBYTES-32..], &sk_a[SECRETKEYBYTES-32..]);
     assert_eq!(vecs.sk_a, &sk_a[..]);
 
     kyber::kem::enc(&mut rng, &mut sendb, &mut key_b, &pk);
