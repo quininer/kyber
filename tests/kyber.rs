@@ -2,13 +2,13 @@ extern crate rand;
 extern crate kyber;
 
 use rand::thread_rng;
-use kyber::params::{ CIPHERTEXTBYTES, SHAREDKEYBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
+use kyber::params::{ SYMBYTES, CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
 
 
 #[test]
 fn test_kyber() {
-    let mut key_a = [0; SHAREDKEYBYTES];
-    let mut key_b = [0; SHAREDKEYBYTES];
+    let mut key_a = [0; SYMBYTES];
+    let mut key_b = [0; SYMBYTES];
     let mut pk = [0; PUBLICKEYBYTES];
     let mut sendb = [0; CIPHERTEXTBYTES];
     let mut sk_a = [0; SECRETKEYBYTES];

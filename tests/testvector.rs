@@ -64,11 +64,11 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), FromHexError> {
 
 #[test]
 fn test_testvector() {
-    use kyber::params::{ SHAREDKEYBYTES, CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
+    use kyber::params::{ SYMBYTES, CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
 
     let (mut rng, vecs) = parse_testvector(TEST_VECTOR).unwrap();
 
-    let (mut key_a, mut key_b) = ([0; SHAREDKEYBYTES], [0; SHAREDKEYBYTES]);
+    let (mut key_a, mut key_b) = ([0; SYMBYTES], [0; SYMBYTES]);
     let mut pk = [0; PUBLICKEYBYTES];
     let mut sendb = [0; CIPHERTEXTBYTES];
     let mut sk_a = [0; SECRETKEYBYTES];
@@ -76,8 +76,6 @@ fn test_testvector() {
     kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);
 
     assert_eq!(vecs.pk, &pk[..]);
-    assert_eq!(&vecs.sk_a[..SECRETKEYBYTES-32], &sk_a[..SECRETKEYBYTES-32]);
-    assert_eq!(&vecs.sk_a[SECRETKEYBYTES-32..], &sk_a[SECRETKEYBYTES-32..]);
     assert_eq!(vecs.sk_a, &sk_a[..]);
 
     kyber::kem::enc(&mut rng, &mut sendb, &mut key_b, &pk);

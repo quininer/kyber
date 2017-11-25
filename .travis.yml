@@ -2,8 +2,8 @@ language: rust
 rust: stable
 
 script:
-  - cargo test
   - cargo test --no-default-features --features kyber512
+  - cargo test --no-default-features --features kyber768
   - cargo test --no-default-features --features kyber1024
 
 cache: cargo

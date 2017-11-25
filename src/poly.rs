@@ -1,14 +1,12 @@
 use itertools::Itertools;
 use ::params::{
     N, Q, ETA,
-    NOISESEEDBYTES, SHAREDKEYBYTES,
-    PSIS_BITREV_MONTGOMERY, OMEGAS_MONTGOMER,
-    PSIS_INV_MONTGOMERY, OMEGAS_INV_BITREV_MONTGOMERY,
+    SYMBYTES,
     POLYBYTES, POLYCOMPRESSEDBYTES
 };
 use ::reduce::{ barrett_reduce, freeze };
 use ::cbd::cbd;
-use ::ntt::{ bitrev_vector, mul_coefficients, ntt as fft };
+pub use ::ntt::{ ntt, invntt };
 
 
 pub type Poly = [u16; N];
@@ -81,26 +79,12 @@ pub fn frombytes(poly: &mut Poly, buf: &[u8; POLYBYTES]) {
     }
 }
 
-pub fn getnoise(poly: &mut Poly, seed: &[u8; NOISESEEDBYTES], nonce: u8) {
+pub fn getnoise(poly: &mut Poly, seed: &[u8; SYMBYTES], nonce: u8) {
     let mut buf = [0; ETA * N / 4];
 
-    shake256!(&mut buf; &seed[..NOISESEEDBYTES], &[nonce]);
+    shake256!(&mut buf; &seed[..SYMBYTES], &[nonce]);
 
     cbd(poly, &buf);
-}
-
-#[inline]
-pub fn ntt(poly: &mut Poly) {
-    bitrev_vector(poly);
-    mul_coefficients(poly, &PSIS_BITREV_MONTGOMERY);
-    fft(poly, &OMEGAS_MONTGOMER);
-    bitrev_vector(poly);
-}
-
-#[inline]
-pub fn invntt(poly: &mut Poly) {
-    fft(poly, &OMEGAS_INV_BITREV_MONTGOMERY);
-    mul_coefficients(poly, &PSIS_INV_MONTGOMERY);
 }
 
 #[inline]
@@ -118,7 +102,7 @@ pub fn sub(r: &mut Poly, b: &Poly) {
 }
 
 #[inline]
-pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
+pub fn frommsg(r: &mut Poly, msg: &[u8; SYMBYTES]) {
     for (i, b) in msg.iter().enumerate() {
         for j in 0..8 {
             let mask = ::core::u16::MIN.wrapping_sub(u16::from(b >> j) & 1);
@@ -128,7 +112,7 @@ pub fn frommsg(r: &mut Poly, msg: &[u8; SHAREDKEYBYTES]) {
 }
 
 #[inline]
-pub fn tomsg(a: &Poly, msg: &mut [u8; SHAREDKEYBYTES]) {
+pub fn tomsg(a: &Poly, msg: &mut [u8; SYMBYTES]) {
     for (i, b) in msg.iter_mut().enumerate() {
         *b = 0;
         for j in 0..8 {

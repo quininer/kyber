@@ -6,7 +6,7 @@ use ::params::{
     N, K, Q,
     INDCPA_PUBLICKEYBYTES, INDCPA_SECRETKEYBYTES, INDCPA_BYTES, INDCPA_MSGBYTES,
     POLYVECBYTES, POLYCOMPRESSEDBYTES, POLYVECCOMPRESSEDBYTES,
-    SEEDBYTES, COINBYTES
+    SYMBYTES
 };
 
 
@@ -21,15 +21,15 @@ pub fn unpack_sk(sk: &mut PolyVec, a: &[u8; INDCPA_SECRETKEYBYTES]) {
 }
 
 #[inline]
-pub fn pack_pk(r: &mut [u8; INDCPA_PUBLICKEYBYTES], pk: &PolyVec, seed: &[u8; SEEDBYTES]) {
+pub fn pack_pk(r: &mut [u8; INDCPA_PUBLICKEYBYTES], pk: &PolyVec, seed: &[u8; SYMBYTES]) {
     polyvec::compress(pk, array_mut_ref!(r, 0, POLYVECCOMPRESSEDBYTES));
-    array_mut_ref!(r, POLYVECCOMPRESSEDBYTES, SEEDBYTES).clone_from(seed);
+    array_mut_ref!(r, POLYVECCOMPRESSEDBYTES, SYMBYTES).clone_from(seed);
 }
 
 #[inline]
-pub fn unpack_pk(pk: &mut PolyVec, seed: &mut [u8; SEEDBYTES], packedpk: &[u8; INDCPA_PUBLICKEYBYTES]) {
+pub fn unpack_pk(pk: &mut PolyVec, seed: &mut [u8; SYMBYTES], packedpk: &[u8; INDCPA_PUBLICKEYBYTES]) {
     polyvec::decompress(pk, array_ref!(packedpk, 0, POLYVECCOMPRESSEDBYTES));
-    seed.clone_from(array_ref!(packedpk, POLYVECCOMPRESSEDBYTES, SEEDBYTES));
+    seed.clone_from(array_ref!(packedpk, POLYVECCOMPRESSEDBYTES, SYMBYTES));
 }
 
 #[inline]
@@ -44,7 +44,7 @@ pub fn unpack_ciphertext(b: &mut PolyVec, v: &mut Poly, r: &[u8; INDCPA_BYTES]) 
     poly::decompress(v, array_ref!(r, POLYVECCOMPRESSEDBYTES, POLYCOMPRESSEDBYTES));
 }
 
-pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SEEDBYTES], transposed: bool) {
+pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SYMBYTES], transposed: bool) {
     use sha3::Shake128;
     use digest::{ Input, ExtendableOutput, XofReader };
 
@@ -81,18 +81,18 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SEEDBYTES], transposed: bool) {
 }
 
 pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8; INDCPA_SECRETKEYBYTES]) {
-    let mut seed = [0; SEEDBYTES + COINBYTES];
+    let mut seed = [0; SYMBYTES + SYMBYTES];
     let mut a = [[[0; N]; K]; K];
     let mut e = [[0; N]; K];
     let mut pkpv = [[0; N]; K];
     let mut skpv = [[0; N]; K];
     let mut nonce = 0;
 
-    rng.fill_bytes(&mut seed[..SEEDBYTES]);
-    shake256!(&mut seed; &seed[..SEEDBYTES]);
+    rng.fill_bytes(&mut seed[..SYMBYTES]);
+    shake256!(&mut seed; &seed[..SYMBYTES]);
 
-    let publicseed = array_ref!(seed, 0, SEEDBYTES);
-    let noiseseed = array_ref!(seed, SEEDBYTES, COINBYTES);
+    let publicseed = array_ref!(seed, 0, SYMBYTES);
+    let noiseseed = array_ref!(seed, SYMBYTES, SYMBYTES);
 
     gen_matrix(&mut a, publicseed, false);
 
@@ -118,12 +118,12 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8
     pack_pk(pk, &pkpv, publicseed);
 }
 
-pub fn enc(c: &mut [u8; INDCPA_BYTES], m: &[u8; INDCPA_MSGBYTES], pk: &[u8; INDCPA_PUBLICKEYBYTES], coins: &[u8; COINBYTES]) {
+pub fn enc(c: &mut [u8; INDCPA_BYTES], m: &[u8; INDCPA_MSGBYTES], pk: &[u8; INDCPA_PUBLICKEYBYTES], coins: &[u8; SYMBYTES]) {
     let (mut k, mut v, mut epp) = ([0; N], [0; N], [0; N]);
     let (mut sp, mut ep, mut bp) = ([[0; N]; K], [[0; N]; K], [[0; N]; K]);
     let mut pkpv = [[0; N]; K];
     let mut at = [[[0; N]; K]; K];
-    let mut seed = [0; SEEDBYTES];
+    let mut seed = [0; SYMBYTES];
     let mut nonce = 0;
 
     unpack_pk(&mut pkpv, &mut seed, pk);
