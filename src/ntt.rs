@@ -14,7 +14,9 @@ pub fn ntt(p: &mut [u16; N]) {
                 let t = montgomery_reduce(u32::from(zeta) * u32::from(p[j + (1 << level)]));
 
                 p[j + (1 << level)] = barrett_reduce(p[j] + 4 * (Q as u16) - t);
-                p[j] = barrett_reduce(p[j] + t);
+                p[j] =
+                    if level & 1 != 0 { p[j] + t }
+                    else { barrett_reduce(p[j] + t) };
             }
         }
     }
