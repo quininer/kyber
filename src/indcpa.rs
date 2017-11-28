@@ -89,7 +89,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8
     let mut nonce = 0;
 
     rng.fill_bytes(&mut seed[..SYMBYTES]);
-    shake256!(&mut seed; &seed[..SYMBYTES]);
+    sha3_512!(&mut seed; &seed[..SYMBYTES]);
 
     let publicseed = array_ref!(seed, 0, SYMBYTES);
     let noiseseed = array_ref!(seed, SYMBYTES, SYMBYTES);

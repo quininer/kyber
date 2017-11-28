@@ -75,6 +75,9 @@ fn test_testvector() {
 
     kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);
 
+    assert_eq!(&vecs.sk_a[SECRETKEYBYTES-32..], &sk_a[SECRETKEYBYTES-32..]);
+    assert_eq!(&vecs.sk_a[..SECRETKEYBYTES - 64], &sk_a[..SECRETKEYBYTES - 64]);
+    assert_eq!(&vecs.sk_a[SECRETKEYBYTES - 64..][..32], &sk_a[SECRETKEYBYTES - 64..][..32]);
     assert_eq!(vecs.pk, &pk[..]);
     assert_eq!(vecs.sk_a, &sk_a[..]);
 

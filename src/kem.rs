@@ -13,7 +13,7 @@ pub fn keypair(rng: &mut Rng, pk: &mut [u8; PUBLICKEYBYTES], sk: &mut [u8; SECRE
     indcpa::keypair(rng, pk, array_mut_ref!(sk, 0, POLYVECBYTES));
     array_mut_ref!(sk, INDCPA_SECRETKEYBYTES, INDCPA_PUBLICKEYBYTES).clone_from(pk);
 
-    shake256!(&mut sk[SECRETKEYBYTES - SYMBYTES - SYMBYTES..][..SYMBYTES]; &pk[..PUBLICKEYBYTES]);
+    sha3_256!(&mut sk[SECRETKEYBYTES - 2 * SYMBYTES..][..SYMBYTES]; &pk[..PUBLICKEYBYTES]);
 
     rng.fill_bytes(&mut sk[SECRETKEYBYTES - SYMBYTES..][..SYMBYTES]);
 }
@@ -24,15 +24,15 @@ pub fn enc(rng: &mut Rng, c: &mut [u8; CIPHERTEXTBYTES], k: &mut [u8; SYMBYTES],
     let mut kr = [0; SYMBYTES + SYMBYTES];
 
     rng.fill_bytes(&mut buf);
-    shake256!(&mut buf; &buf);
+    sha3_256!(&mut buf; &buf);
 
-    shake256!(&mut buf2; &pk[..PUBLICKEYBYTES]);
-    shake256!(&mut kr; &buf, &buf2);
+    sha3_256!(&mut buf2; &pk[..PUBLICKEYBYTES]);
+    sha3_512!(&mut kr; &buf, &buf2);
 
     indcpa::enc(array_mut_ref!(c, 0, INDCPA_BYTES), &buf, pk, array_ref!(&kr, SYMBYTES, SYMBYTES));
 
-    shake256!(&mut kr[SYMBYTES..][..SYMBYTES]; c);
-    shake256!(k; &kr);
+    sha3_256!(&mut kr[SYMBYTES..][..SYMBYTES]; c);
+    sha3_256!(k; &kr);
 }
 
 pub fn dec(k: &mut [u8; SYMBYTES], c: &[u8; CIPHERTEXTBYTES], sk: &[u8; SECRETKEYBYTES]) -> bool {
@@ -42,17 +42,17 @@ pub fn dec(k: &mut [u8; SYMBYTES], c: &[u8; CIPHERTEXTBYTES], sk: &[u8; SECRETKE
     let pk = array_ref!(sk, INDCPA_SECRETKEYBYTES, INDCPA_PUBLICKEYBYTES);
 
     indcpa::dec(&mut buf, array_ref!(c, 0, INDCPA_BYTES), array_ref!(sk, 0, POLYVECBYTES));
-    shake256!(&mut kr; &buf, &sk[SECRETKEYBYTES - SYMBYTES - SYMBYTES..][..SYMBYTES]);
+    sha3_512!(&mut kr; &buf, &sk[SECRETKEYBYTES - SYMBYTES - SYMBYTES..][..SYMBYTES]);
 
     indcpa::enc(&mut cmp, &buf, pk, array_ref!(&kr, SYMBYTES, SYMBYTES));
 
     let flag = utils::eq(c, &cmp);
 
-    shake256!(&mut kr[SYMBYTES..][..SYMBYTES]; &c[..CIPHERTEXTBYTES]);
+    sha3_256!(&mut kr[SYMBYTES..][..SYMBYTES]; &c[..CIPHERTEXTBYTES]);
 
     utils::select_mov(&mut kr, &sk[SECRETKEYBYTES - SYMBYTES..][..SYMBYTES], flag);
 
-    shake256!(k; &kr);
+    sha3_256!(k; &kr);
 
     flag
 }
