@@ -1,9 +1,9 @@
 extern crate rand;
-extern crate rustc_hex;
+extern crate hex;
 extern crate kyber;
 
 use rand::Rng;
-use rustc_hex::{ FromHex, FromHexError };
+use hex::FromHexError;
 
 #[cfg(feature = "kyber512")]
 const TEST_VECTOR: &str = include_str!("testvectork2.txt");
@@ -30,7 +30,7 @@ impl Rng for FixedRng {
 }
 
 #[derive(Default)]
-struct Vectors {
+struct Vector {
     pub pk: Vec<u8>,
     pub sk_a: Vec<u8>,
     pub sendb: Vec<u8>,
@@ -38,12 +38,12 @@ struct Vectors {
     pub key_a: Vec<u8>
 }
 
-fn parse_testvector(input: &str) -> Result<(FixedRng, Vectors), FromHexError> {
-    let (mut rng, mut vecs): (FixedRng, Vectors) = Default::default();
+fn parse_testvector(input: &str) -> Result<(FixedRng, Vector), FromHexError> {
+    let (mut rng, mut vecs): (FixedRng, Vector) = Default::default();
 
     for (i, line) in input.lines()
         .take(8)
-        .map(|line| line.from_hex())
+        .map(hex::decode)
         .enumerate()
     {
         let mut line = line?;
@@ -75,9 +75,6 @@ fn test_testvector() {
 
     kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);
 
-    assert_eq!(&vecs.sk_a[SECRETKEYBYTES-32..], &sk_a[SECRETKEYBYTES-32..]);
-    assert_eq!(&vecs.sk_a[..SECRETKEYBYTES - 64], &sk_a[..SECRETKEYBYTES - 64]);
-    assert_eq!(&vecs.sk_a[SECRETKEYBYTES - 64..][..32], &sk_a[SECRETKEYBYTES - 64..][..32]);
     assert_eq!(vecs.pk, &pk[..]);
     assert_eq!(vecs.sk_a, &sk_a[..]);
 
