@@ -80,7 +80,7 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SYMBYTES], transposed: bool) {
     }
 }
 
-pub fn keypair(rng: &mut Rng, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8; INDCPA_SECRETKEYBYTES]) {
+pub fn keypair<R: Rng>(rng: &mut R, pk: &mut [u8; INDCPA_PUBLICKEYBYTES], sk: &mut [u8; INDCPA_SECRETKEYBYTES]) {
     let mut seed = [0; SYMBYTES + SYMBYTES];
     let mut a = [[[0; N]; K]; K];
     let mut e = [[0; N]; K];

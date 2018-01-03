@@ -2,6 +2,7 @@ extern crate core;
 
 #[macro_use] extern crate arrayref;
 extern crate rand;
+extern crate subtle;
 extern crate byteorder;
 extern crate itertools;
 extern crate sha3;

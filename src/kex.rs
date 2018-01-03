@@ -10,8 +10,8 @@ pub mod uake {
     use ::params::{ UAKE_SENDABYTES, UAKE_SENDBBYTES };
     use super::*;
 
-    pub fn init_a(
-        rng: &mut Rng,
+    pub fn init_a<R: Rng>(
+        rng: &mut R,
         send: &mut [u8; UAKE_SENDABYTES],
         tk: &mut [u8; SYMBYTES],
         sk: &mut [u8; SECRETKEYBYTES],
@@ -21,8 +21,8 @@ pub mod uake {
         kem::enc(rng, array_mut_ref!(send, PUBLICKEYBYTES, CIPHERTEXTBYTES), tk, pkb);
     }
 
-    pub fn shared_b(
-        rng: &mut Rng,
+    pub fn shared_b<R: Rng>(
+        rng: &mut R,
         send: &mut [u8; UAKE_SENDBBYTES],
         k: &mut [u8; SYMBYTES],
         recv: &[u8; UAKE_SENDABYTES],
@@ -51,8 +51,8 @@ pub mod ake {
     use ::params::{ AKE_SENDABYTES, AKE_SENDBBYTES };
     use super::*;
 
-    pub fn init_a(
-        rng: &mut Rng,
+    pub fn init_a<R: Rng>(
+        rng: &mut R,
         send: &mut [u8; AKE_SENDABYTES],
         tk: &mut [u8; SYMBYTES],
         sk: &mut [u8; SECRETKEYBYTES],
@@ -62,8 +62,8 @@ pub mod ake {
         kem::enc(rng, array_mut_ref!(send, PUBLICKEYBYTES, CIPHERTEXTBYTES), tk, pkb);
     }
 
-    pub fn shared_b(
-        rng: &mut Rng,
+    pub fn shared_b<R: Rng>(
+        rng: &mut R,
         send: &mut [u8; AKE_SENDBBYTES],
         k: &mut [u8; SYMBYTES],
         recv: &[u8; AKE_SENDABYTES],
