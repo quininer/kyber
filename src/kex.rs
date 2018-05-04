@@ -1,4 +1,4 @@
-use rand::Rng;
+use rand_core::{ RngCore, CryptoRng };
 use ::params::{
     SYMBYTES,
     PUBLICKEYBYTES, SECRETKEYBYTES, CIPHERTEXTBYTES,
@@ -10,7 +10,7 @@ pub mod uake {
     use ::params::{ UAKE_SENDABYTES, UAKE_SENDBBYTES };
     use super::*;
 
-    pub fn init_a<R: Rng>(
+    pub fn init_a<R: RngCore + CryptoRng>(
         rng: &mut R,
         send: &mut [u8; UAKE_SENDABYTES],
         tk: &mut [u8; SYMBYTES],
@@ -21,7 +21,7 @@ pub mod uake {
         kem::enc(rng, array_mut_ref!(send, PUBLICKEYBYTES, CIPHERTEXTBYTES), tk, pkb);
     }
 
-    pub fn shared_b<R: Rng>(
+    pub fn shared_b<R: RngCore + CryptoRng>(
         rng: &mut R,
         send: &mut [u8; UAKE_SENDBBYTES],
         k: &mut [u8; SYMBYTES],
@@ -51,7 +51,7 @@ pub mod ake {
     use ::params::{ AKE_SENDABYTES, AKE_SENDBBYTES };
     use super::*;
 
-    pub fn init_a<R: Rng>(
+    pub fn init_a<R: RngCore + CryptoRng>(
         rng: &mut R,
         send: &mut [u8; AKE_SENDABYTES],
         tk: &mut [u8; SYMBYTES],
@@ -62,7 +62,7 @@ pub mod ake {
         kem::enc(rng, array_mut_ref!(send, PUBLICKEYBYTES, CIPHERTEXTBYTES), tk, pkb);
     }
 
-    pub fn shared_b<R: Rng>(
+    pub fn shared_b<R: RngCore + CryptoRng>(
         rng: &mut R,
         send: &mut [u8; AKE_SENDBBYTES],
         k: &mut [u8; SYMBYTES],

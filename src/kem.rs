@@ -1,5 +1,5 @@
-use rand::Rng;
-use subtle::{ slices_equal, ConditionallyAssignable };
+use rand_core::{ RngCore, CryptoRng };
+use subtle::{ ConstantTimeEq, ConditionallyAssignable };
 use ::params::{
     SYMBYTES,
     CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES,
@@ -10,7 +10,7 @@ use ::params::{
 use ::indcpa;
 
 
-pub fn keypair<R: Rng>(rng: &mut R, pk: &mut [u8; PUBLICKEYBYTES], sk: &mut [u8; SECRETKEYBYTES]) {
+pub fn keypair<R: RngCore + CryptoRng>(rng: &mut R, pk: &mut [u8; PUBLICKEYBYTES], sk: &mut [u8; SECRETKEYBYTES]) {
     indcpa::keypair(rng, pk, array_mut_ref!(sk, 0, POLYVECBYTES));
     array_mut_ref!(sk, INDCPA_SECRETKEYBYTES, INDCPA_PUBLICKEYBYTES).clone_from(pk);
 
@@ -19,7 +19,7 @@ pub fn keypair<R: Rng>(rng: &mut R, pk: &mut [u8; PUBLICKEYBYTES], sk: &mut [u8;
     rng.fill_bytes(&mut sk[SECRETKEYBYTES - SYMBYTES..][..SYMBYTES]);
 }
 
-pub fn enc<R: Rng>(rng: &mut R, c: &mut [u8; CIPHERTEXTBYTES], k: &mut [u8; SYMBYTES], pk: &[u8; PUBLICKEYBYTES]) {
+pub fn enc<R: RngCore + CryptoRng>(rng: &mut R, c: &mut [u8; CIPHERTEXTBYTES], k: &mut [u8; SYMBYTES], pk: &[u8; PUBLICKEYBYTES]) {
     let mut buf = [0; SYMBYTES];
     let mut buf2 = [0; SYMBYTES];
     let mut kr = [0; SYMBYTES + SYMBYTES];
@@ -47,17 +47,20 @@ pub fn dec(k: &mut [u8; SYMBYTES], c: &[u8; CIPHERTEXTBYTES], sk: &[u8; SECRETKE
 
     indcpa::enc(&mut cmp, &buf, pk, array_ref!(&kr, SYMBYTES, SYMBYTES));
 
-    let flag = slices_equal(c, &cmp);
+    let flag = c.ct_eq(&cmp);
 
     sha3_256!(&mut kr[SYMBYTES..][..SYMBYTES]; &c[..CIPHERTEXTBYTES]);
 
     {
         let kr = array_mut_ref!(kr, 0, SYMBYTES);
         let sk = array_ref!(sk, SECRETKEYBYTES - SYMBYTES, SYMBYTES);
-        kr.conditional_assign(sk, flag ^ 1);
+
+        for i in 0..SYMBYTES {
+            kr[i].conditional_assign(&sk[i], !flag);
+        }
     }
 
     sha3_256!(k; &kr);
 
-    flag == 1
+    flag.unwrap_u8() == 1
 }

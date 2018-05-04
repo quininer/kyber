@@ -2,7 +2,9 @@ extern crate rand;
 extern crate hex;
 extern crate kyber;
 
-use rand::Rng;
+use std::io::Cursor;
+use rand::{ RngCore, CryptoRng };
+use rand::read::ReadRng;
 use hex::FromHexError;
 
 #[cfg(feature = "kyber512")]
@@ -16,20 +18,6 @@ const TEST_VECTOR: &str = include_str!("testvectork4.txt");
 
 
 #[derive(Default)]
-struct FixedRng(pub Vec<u8>);
-
-impl Rng for FixedRng {
-    fn next_u32(&mut self) -> u32 {
-        unimplemented!()
-    }
-
-    fn fill_bytes(&mut self, buf: &mut [u8]) {
-        let drain = self.0.drain(..buf.len()).collect::<Vec<_>>();
-        buf.copy_from_slice(&drain);
-    }
-}
-
-#[derive(Default)]
 struct Vector {
     pub pk: Vec<u8>,
     pub sk_a: Vec<u8>,
@@ -38,8 +26,32 @@ struct Vector {
     pub key_a: Vec<u8>
 }
 
+type FixedRng = UnsafeRng<ReadRng<Cursor<Vec<u8>>>>;
+
+struct UnsafeRng<R>(R);
+
+impl<R: RngCore> RngCore for UnsafeRng<R> {
+    fn next_u32(&mut self) -> u32 {
+        self.0.next_u32()
+    }
+
+    fn next_u64(&mut self) -> u64 {
+        self.0.next_u64()
+    }
+
+    fn fill_bytes(&mut self, dest: &mut [u8]) {
+        self.0.fill_bytes(dest)
+    }
+
+    fn try_fill_bytes(&mut self, dest: &mut [u8]) -> Result<(), rand::Error> {
+        self.0.try_fill_bytes(dest)
+    }
+}
+
+impl<R: RngCore> CryptoRng for UnsafeRng<R> {}
+
 fn parse_testvector(input: &str) -> Result<(FixedRng, Vector), FromHexError> {
-    let (mut rng, mut vecs): (FixedRng, Vector) = Default::default();
+    let (mut rng, mut vecs): (Vec<u8>, Vector) = Default::default();
 
     for (i, line) in input.lines()
         .take(8)
@@ -48,7 +60,7 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vector), FromHexError> {
     {
         let mut line = line?;
         match i {
-            0...1 | 4 => rng.0.append(&mut line),
+            0...1 | 4 => rng.append(&mut line),
             2 => vecs.pk.append(&mut line),
             3 => vecs.sk_a.append(&mut line),
             5 => vecs.sendb.append(&mut line),
@@ -58,7 +70,7 @@ fn parse_testvector(input: &str) -> Result<(FixedRng, Vector), FromHexError> {
         }
     }
 
-    Ok((rng, vecs))
+    Ok((UnsafeRng(ReadRng::new(Cursor::new(rng))), vecs))
 }
 
 
