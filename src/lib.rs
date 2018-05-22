@@ -1,4 +1,4 @@
-extern crate core;
+#![no_std]
 
 #[macro_use] extern crate arrayref;
 extern crate rand_core;

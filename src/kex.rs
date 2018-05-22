@@ -90,6 +90,6 @@ pub mod ake {
         let mut buf2 = [0; SYMBYTES];
         kem::dec(&mut buf, array_ref!(recv, 0, CIPHERTEXTBYTES), sk);
         kem::dec(&mut buf2, array_ref!(recv, CIPHERTEXTBYTES, CIPHERTEXTBYTES), ska);
-        shake256!(k; &buf, &buf2, &tk[..SYMBYTES]);
+        shake256!(k; &buf, &buf2, tk);
     }
 }
