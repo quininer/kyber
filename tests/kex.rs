@@ -1,13 +1,12 @@
 extern crate rand;
 extern crate kyber;
 
-use rand::{ FromEntropy, ChaChaRng };
 use kyber::params::*;
 
 
 #[test]
 fn test_kex_uake() {
-    let mut rng = ChaChaRng::from_entropy();
+    let mut rng = rand::thread_rng();
     let (mut pkb, mut skb) = ([0; PUBLICKEYBYTES], [0; SECRETKEYBYTES]);
     let mut ska = [0; SECRETKEYBYTES];
     let mut senda = [0; UAKE_SENDABYTES];
@@ -28,7 +27,7 @@ fn test_kex_uake() {
 
 #[test]
 fn test_kex_ake() {
-    let mut rng = ChaChaRng::from_entropy();
+    let mut rng = rand::thread_rng();
     let (mut pkb, mut skb) = ([0; PUBLICKEYBYTES], [0; SECRETKEYBYTES]);
     let (mut pka, mut ska) = ([0; PUBLICKEYBYTES], [0; SECRETKEYBYTES]);
     let mut eska = [0; SECRETKEYBYTES];

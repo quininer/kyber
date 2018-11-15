@@ -4,7 +4,7 @@ extern crate kyber;
 
 use std::io::Cursor;
 use rand::{ RngCore, CryptoRng };
-use rand::read::ReadRng;
+use rand::rngs::adapter::ReadRng;
 use hex::FromHexError;
 
 #[cfg(feature = "kyber512")]

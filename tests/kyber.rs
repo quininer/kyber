@@ -1,7 +1,6 @@
 extern crate rand;
 extern crate kyber;
 
-use rand::{ FromEntropy, ChaChaRng };
 use kyber::params::{ SYMBYTES, CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES };
 
 
@@ -12,7 +11,7 @@ fn test_kyber() {
     let mut pk = [0; PUBLICKEYBYTES];
     let mut sendb = [0; CIPHERTEXTBYTES];
     let mut sk_a = [0; SECRETKEYBYTES];
-    let mut rng = ChaChaRng::from_entropy();
+    let mut rng = rand::thread_rng();
 
     for _ in 0..100 {
         kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);

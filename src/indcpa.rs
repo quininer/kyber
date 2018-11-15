@@ -57,8 +57,8 @@ pub fn gen_matrix(a: &mut [PolyVec], seed: &[u8; SYMBYTES], transposed: bool) {
             let mut buf = [0; SHAKE128_RATE * 4];
             let sep = if transposed { [i as u8, j as u8] } else { [j as u8, i as u8] };
 
-            shake.process(seed);
-            shake.process(&sep);
+            shake.input(seed);
+            shake.input(&sep);
             let mut xof = shake.xof_result();
             xof.read(&mut buf);
 
