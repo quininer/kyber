@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use ::params::{ N, Q, ZETAS, OMEGAS_INV_BITREV_MONTGOMERY, PSIS_INV_MONTGOMERY };
 use ::reduce::{ montgomery_reduce, barrett_reduce };
 
@@ -6,7 +5,7 @@ use ::reduce::{ montgomery_reduce, barrett_reduce };
 pub fn ntt(p: &mut [u16; N]) {
     let mut k = 1;
     for level in (0..8).rev() {
-        for start in Itertools::step(0..N, 2 * (1 << level)) {
+        for start in (0..N).step_by(2 * (1 << level)) {
             let zeta = ZETAS[k];
             k += 1;
 
@@ -25,7 +24,7 @@ pub fn ntt(p: &mut [u16; N]) {
 pub fn invntt(a: &mut [u16; N]) {
     for level in 0..8 {
         for start in 0..(1 << level) {
-            for (jt, j) in Itertools::step(start..(N - 1), 2 * (1 << level)).enumerate() {
+            for (jt, j) in (start..(N - 1)).step_by(2 * (1 << level)).enumerate() {
                 let w = OMEGAS_INV_BITREV_MONTGOMERY[jt];
                 let tmp = a[j];
 

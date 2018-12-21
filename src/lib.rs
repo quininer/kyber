@@ -4,7 +4,6 @@
 extern crate rand_core;
 extern crate subtle;
 extern crate byteorder;
-extern crate itertools;
 extern crate sha3;
 extern crate digest;
 

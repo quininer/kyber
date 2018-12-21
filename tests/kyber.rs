@@ -16,7 +16,7 @@ fn test_kyber() {
     for _ in 0..100 {
         kyber::kem::keypair(&mut rng, &mut pk, &mut sk_a);
         kyber::kem::enc(&mut rng, &mut sendb, &mut key_b, &pk);
-        assert!(kyber::kem::dec(&mut key_a, &sendb, &sk_a));
+        kyber::kem::dec(&mut key_a, &sendb, &sk_a);
 
         assert!(key_a.iter().any(|&n| n != 0));
         assert_eq!(key_a, key_b);

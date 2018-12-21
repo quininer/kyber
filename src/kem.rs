@@ -1,5 +1,5 @@
 use rand_core::{ RngCore, CryptoRng };
-use subtle::{ ConstantTimeEq, ConditionallyAssignable };
+use subtle::{ ConstantTimeEq, ConditionallySelectable };
 use ::params::{
     SYMBYTES,
     CIPHERTEXTBYTES, PUBLICKEYBYTES, SECRETKEYBYTES,
@@ -36,7 +36,7 @@ pub fn enc<R: RngCore + CryptoRng>(rng: &mut R, c: &mut [u8; CIPHERTEXTBYTES], k
     sha3_256!(k; &kr);
 }
 
-pub fn dec(k: &mut [u8; SYMBYTES], c: &[u8; CIPHERTEXTBYTES], sk: &[u8; SECRETKEYBYTES]) -> bool {
+pub fn dec(k: &mut [u8; SYMBYTES], c: &[u8; CIPHERTEXTBYTES], sk: &[u8; SECRETKEYBYTES]) {
     let mut cmp = [0; CIPHERTEXTBYTES];
     let mut buf = [0; SYMBYTES];
     let mut kr = [0; SYMBYTES + SYMBYTES];
@@ -61,6 +61,4 @@ pub fn dec(k: &mut [u8; SYMBYTES], c: &[u8; CIPHERTEXTBYTES], sk: &[u8; SECRETKE
     }
 
     sha3_256!(k; &kr);
-
-    flag.unwrap_u8() == 1
 }

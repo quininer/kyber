@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use ::params::{
     N, Q, ETA,
     SYMBYTES,
@@ -15,7 +14,7 @@ pub fn compress(poly: &Poly, buf: &mut [u8; POLYCOMPRESSEDBYTES]) {
     let mut t = [0; 8];
     let mut k = 0;
 
-    for i in Itertools::step(0..N, 8) {
+    for i in (0..N).step_by(8) {
         for j in 0..8 {
             t[j] = (((u32::from(freeze(poly[i + j])) << 3) + Q as u32 / 2) / Q as u32) & 7;
         }
@@ -29,7 +28,7 @@ pub fn compress(poly: &Poly, buf: &mut [u8; POLYCOMPRESSEDBYTES]) {
 
 pub fn decompress(poly: &mut Poly, buf: &[u8; POLYCOMPRESSEDBYTES]) {
     let mut a = 0;
-    for i in Itertools::step(0..N, 8) {
+    for i in (0..N).step_by(8) {
         poly[i  ] =  (((u16::from(buf[a  ])       & 7) * Q as u16) + 4) >> 3;
         poly[i+1] = ((((u16::from(buf[a  ]) >> 3) & 7) * Q as u16) + 4) >> 3;
         poly[i+2] = ((((u16::from(buf[a  ]) >> 6) | ((u16::from(buf[a+1]) << 2) & 4)) * Q as u16) + 4) >> 3;
